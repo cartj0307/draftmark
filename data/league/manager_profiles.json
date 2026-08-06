@@ -1,0 +1,77 @@
+{
+ "_note": "QB/K/DST timing only \u2014 TE and RB-WR mix tested as noise",
+ "_years": [
+  2024,
+  2025
+ ],
+ "managers": {
+  "Dumpsterfire Igles": {
+   "first_QB": 5.55,
+   "first_K": 13.46,
+   "first_DST": 12.5
+  },
+  "Ern's Tightwads": {
+   "first_QB": 9.84,
+   "first_K": 14.04,
+   "first_DST": 13.93
+  },
+  "Jeff's Mojos": {
+   "first_QB": 6.7,
+   "first_K": 13.46,
+   "first_DST": 10.79
+  },
+  "Kay's Cuties": {
+   "first_QB": 6.98,
+   "first_K": 9.46,
+   "first_DST": 11.07
+  },
+  "Margo's Blackmagicwomen": {
+   "first_QB": 4.98,
+   "first_K": 10.89,
+   "first_DST": 11.64
+  },
+  "Nate's Jive Turkeys": {
+   "first_QB": 4.41,
+   "first_K": 10.61,
+   "first_DST": 10.79
+  },
+  "Nick jr Nighthawks": {
+   "first_QB": 5.55,
+   "first_K": 12.04,
+   "first_DST": 11.93
+  },
+  "Nick's Bluemeanies": {
+   "first_QB": 4.98,
+   "first_K": 12.32,
+   "first_DST": 12.5
+  },
+  "Rich's Rednecks": {
+   "first_QB": 5.27,
+   "first_K": 12.32,
+   "first_DST": 12.21
+  },
+  "Russmans' Rappers": {
+   "first_QB": 6.98,
+   "first_K": 12.89,
+   "first_DST": 12.5
+  },
+  "Show Us Your TDs": {
+   "first_QB": 9.27,
+   "first_K": 11.46,
+   "first_DST": 9.64
+  },
+  "steeltown punishers": {
+   "first_QB": 4.98,
+   "first_K": 12.04,
+   "first_DST": 12.5
+  }
+ },
+ "league_mean": {
+  "first_QB": 6.29,
+  "first_K": 12.08,
+  "first_DST": 11.83
+ },
+ "earliest_K": 7,
+ "earliest_DST": 7,
+ "earliest_QB": 3
+}

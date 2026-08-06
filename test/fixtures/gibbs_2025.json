@@ -1,0 +1,43 @@
+{
+  "player": "Jahmyr Gibbs",
+  "season": 2025,
+  "note": "Phase 0 acceptance suite. Reconciled 17/17 against league box scores. Wk 12 is the only bonus-stacking test, Wk 17 the only combined-flooring test, Wk 1 catches receptions leaking in, Wk 4 catches fractional yardage.",
+  "games": [
+    { "week": 1,  "line": { "rushYds": 19,  "rushTD": 0, "recYds": 31,  "recTD": 0 }, "expected": 1 },
+    { "week": 2,  "line": { "rushYds": 94,  "rushTD": 1, "recYds": 10,  "recTD": 0 }, "expected": 9 },
+    { "week": 3,  "line": { "rushYds": 67,  "rushTD": 2, "recYds": 32,  "recTD": 0 }, "expected": 15 },
+    { "week": 4,  "line": { "rushYds": 91,  "rushTD": 1, "recYds": 6,   "recTD": 0 }, "expected": 9 },
+    { "week": 5,  "line": { "rushYds": 54,  "rushTD": 0, "recYds": 33,  "recTD": 1 }, "expected": 9 },
+    { "week": 6,  "line": { "rushYds": 65,  "rushTD": 0, "recYds": 0,   "recTD": 0 }, "expected": 2 },
+    { "week": 7,  "line": { "rushYds": 136, "rushTD": 2, "recYds": 82,  "recTD": 0 }, "expected": 22 },
+    { "week": 9,  "line": { "rushYds": 25,  "rushTD": 0, "recYds": 3,   "recTD": 0 }, "expected": 1 },
+    { "week": 10, "line": { "rushYds": 142, "rushTD": 2, "recYds": 30,  "recTD": 1 }, "expected": 26 },
+    { "week": 11, "line": { "rushYds": 39,  "rushTD": 0, "recYds": 107, "recTD": 0 }, "expected": 7 },
+    { "week": 12, "line": { "rushYds": 219, "rushTD": 2, "recYds": 45,  "recTD": 1 }, "expected": 30 },
+    { "week": 13, "line": { "rushYds": 68,  "rushTD": 0, "recYds": 18,  "recTD": 0 }, "expected": 2 },
+    { "week": 14, "line": { "rushYds": 43,  "rushTD": 3, "recYds": 77,  "recTD": 0 }, "expected": 22 },
+    { "week": 15, "line": { "rushYds": 38,  "rushTD": 0, "recYds": 20,  "recTD": 0 }, "expected": 1 },
+    { "week": 16, "line": { "rushYds": 2,   "rushTD": 0, "recYds": 66,  "recTD": 1 }, "expected": 8 },
+    { "week": 17, "line": { "rushYds": 41,  "rushTD": 0, "recYds": 23,  "recTD": 0 }, "expected": 1 },
+    { "week": 18, "line": { "rushYds": 80,  "rushTD": 0, "recYds": 33,  "recTD": 1 }, "expected": 10 }
+  ],
+  "synthetics": [
+    {
+      "name": "200-yard receiving game pays 3, not 5 (non-stacking on receiving)",
+      "line": { "recYds": 214, "recTD": 0 },
+      "expected": 11
+    },
+    {
+      "name": "non-QB throwing an INT costs -1 (no positional gating)",
+      "line": { "rushYds": 50, "intThrown": 1 },
+      "expected": 1
+    },
+    {
+      "name": "99 vs 100 rushing yards jumps 3 to 6 (floor + bonus edge)",
+      "lines": [
+        { "line": { "rushYds": 99 },  "expected": 3 },
+        { "line": { "rushYds": 100 }, "expected": 6 }
+      ]
+    }
+  ]
+}

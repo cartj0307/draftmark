@@ -1,0 +1,9 @@
+# huge raw data — regenerates via: python3 build/ingest_nflverse.py
+data/raw/pbp_*.parquet
+data/raw/player_stats_*.parquet
+
+# python / node cruft
+__pycache__/
+*.pyc
+node_modules/
+.DS_Store

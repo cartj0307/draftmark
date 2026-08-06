@@ -1,0 +1,47 @@
+DRAFTMARK — complete project
+============================
+
+This folder is COMPLETE. Replace your old draftmark folder with this one.
+Everything is regenerated and every test passes (209 assertions, 10 suites).
+
+WHAT YOU OPEN ON DRAFT DAY
+    app/draftboard.html          <- double-click it. That's the whole tool.
+
+BEFORE DRAFT DAY — run these 7, in this order, from inside this folder
+    python3 build/ingest_nflverse.py    # fresh 2026 rosters + schedule
+    python3 build/build_xref.py         # rebuild crosswalk from new rosters
+    python3 build/ingest_sleeper.py     # injury status, depth charts
+    python3 build/ingest_espn.py        # ADP + projections
+    python3 build/ingest_odds_espn.py   # Vegas implied totals
+    python3 build/emit_bundle.py        # rebuild data/bundle.json
+    python3 build/emit_board.py         # re-inline into app/draftboard.html
+
+    Then open the regenerated app/draftboard.html.
+    Do this a FEW DAYS EARLY, not the morning of: build_xref.py deliberately
+    hard-fails if new rosters create an ID conflict, and you want time to fix
+    it if that happens.
+
+ONE-TIME SETUP (first machine only)
+    pip install pandas numpy pyarrow requests scipy statsmodels
+    Node needs nothing beyond itself.
+
+WHAT'S NOT IN THIS FOLDER (on purpose)
+    data/raw/pbp_*.parquet and player_stats_*.parquet — about 60 MB of
+    play-by-play. They are excluded to keep the folder small and they are
+    NOT needed for the draft-week refresh above. If you ever want them back:
+        python3 build/ingest_nflverse.py
+
+CHECK EVERYTHING STILL WORKS
+    node test/scoring.test.js       36 assertions, the scoring engine
+    node test/opponents.test.js     opponent model vs your real league
+    node test/vona.test.js          the recommendation engine
+
+FULL REBUILD FROM SCRATCH (only if something breaks badly)
+    python3 build/ingest_nflverse.py
+    python3 build/features.py
+    python3 build/build_xref.py
+    python3 build/fit_distributions.py
+    python3 build/dst_k_models.py
+    python3 build/rookie_model.py
+    python3 build/emit_bundle.py
+    python3 build/emit_board.py
