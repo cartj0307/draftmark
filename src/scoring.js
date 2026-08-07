@@ -1,19 +1,3 @@
-/**
- * Draftmark scoring engine — Phase 1.
- *
- * Pure function: statLine + leagueConfig -> integer points.
- * No state, no I/O, no positional gating (Part II.5): passing columns exist
- * for every player because trick-play INTs and TD passes count for whoever
- * throws them.
- *
- * Contract:
- *  1. Floored yardage per category, independently, whole increments.
- *  2. Touchdowns and turnovers.
- *  3. NON-STACKING yardage bonuses — highest applicable tier only, per category.
- *  4. Receptions and fumbles lost contribute nothing (weight 0 in config).
- *  Output is always an integer; a decimal means something is fractional and wrong.
- */
-
 "use strict";
 
 const EMPTY_LINE = Object.freeze({
@@ -30,12 +14,6 @@ const EMPTY_LINE = Object.freeze({
   twoPtRush: 0,
   twoPtRec: 0,
 });
-
-/**
- * Highest applicable bonus tier for one category. Non-stacking by contract:
- * even if config.stacking were true this engine refuses to stack, because the
- * ruleset was validated non-stacking (Gibbs Wk 12: 219 rush yds -> 3, not 5).
- */
 function yardageBonus(yards, tiers) {
   if (!tiers || tiers.length === 0) return 0;
   let best = 0;
@@ -49,11 +27,6 @@ function yardageBonus(yards, tiers) {
   return best;
 }
 
-/**
- * @param {object} statLine  partial stat line; missing fields are 0
- * @param {object} leagueConfig  the parsed config/league.json
- * @returns {number} integer fantasy points
- */
 function score(statLine, leagueConfig) {
   const cfg = leagueConfig.scoring;
   // hot path: direct reads with validation (called ~30M times per full sim)
@@ -73,27 +46,18 @@ function score(statLine, leagueConfig) {
 
   let pts = 0;
 
-  // 1. Floored yardage, per category, independently, whole increments.
   pts += Math.floor(s.passYds / cfg.yardage_floors.passing.yards_per_point);
   pts += Math.floor(s.rushYds / cfg.yardage_floors.rushing.yards_per_point);
   pts += Math.floor(s.recYds / cfg.yardage_floors.receiving.yards_per_point);
-
-  // 2. Touchdowns and turnovers (no positional gating).
   pts += s.rushTD * cfg.touchdowns.rushing;
   pts += s.recTD * cfg.touchdowns.receiving;
   pts += s.passTD * cfg.touchdowns.passing;
   pts += s.intThrown * cfg.turnovers.interception_thrown;
   pts += s.fumblesLost * cfg.turnovers.fumble_lost; // weight 0 — validated
-
-  // 3. Non-stacking yardage bonuses, highest tier only, per category.
   pts += yardageBonus(s.rushYds, cfg.yardage_bonuses.rushing);
   pts += yardageBonus(s.recYds, cfg.yardage_bonuses.receiving);
   pts += yardageBonus(s.passYds, cfg.yardage_bonuses.passing);
-
-  // 4. Receptions score ZERO (weight from config, validated 0).
   pts += s.receptions * cfg.receptions;
-
-  // Two-point conversions per config.
   pts += s.twoPtPass * cfg.two_point_conversions.pass;
   pts += s.twoPtRush * cfg.two_point_conversions.rush;
   pts += s.twoPtRec * cfg.two_point_conversions.receive;
@@ -103,12 +67,6 @@ function score(statLine, leagueConfig) {
   }
   return pts;
 }
-
-/**
- * Bucket lookup for D/ST points-allowed and yards-allowed tables. Buckets in
- * config are exhaustive and disjoint (explicit zero-point gaps included), so
- * exactly one matches.
- */
 function bucketPoints(value, buckets) {
   for (const b of buckets) {
     const max = b.max === null || b.max === undefined ? Infinity : b.max;
@@ -116,11 +74,6 @@ function bucketPoints(value, buckets) {
   }
   throw new Error(`no bucket matches value ${value} — config buckets not exhaustive`);
 }
-
-/**
- * Kicker scoring. fgMade is an array of made-FG distances in yards.
- * @param {{patMade?: number, fgMade?: number[]}} line
- */
 function scoreKicker(line, leagueConfig) {
   const cfg = leagueConfig.scoring.kicking;
   const pat = line.patMade || 0;
@@ -132,11 +85,6 @@ function scoreKicker(line, leagueConfig) {
   if (!Number.isInteger(pts)) throw new Error(`non-integer kicker score ${pts}`);
   return pts;
 }
-
-/**
- * D/ST scoring per the league table.
- * @param {object} line  counts per event plus pointsAllowed / yardsAllowed
- */
 function scoreDST(line, leagueConfig) {
   const cfg = leagueConfig.scoring.dst;
   const s = {
