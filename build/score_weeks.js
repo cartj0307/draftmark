@@ -1,15 +1,3 @@
-/**
- * Draftmark Phase 1 — score historical player-weeks through src/scoring.js.
- *
- * There is exactly ONE scoring implementation in this project. Python never
- * reimplements it. This script reads data/interim/player_weeks.json
- * (emitted by fit_distributions.py step 0), scores every line, and writes
- * data/interim/player_week_points.json.
- *
- * Feeds: defensive strength by position (Part V.5), the Phase 1 backtest
- * (Part II.8), and any future calibration work.
- */
-
 "use strict";
 
 const fs = require("fs");
