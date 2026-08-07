@@ -1,37 +1,3 @@
-"""
-Do managers have a stable ROSTER-STATE POLICY, even when their calendar
-timing looks random?
-
-The first tendency study measured *when* a manager takes each position — the
-round of their first QB, TE, K, D/ST. QB/K/DST timing was stable; RB/WR/TE
-timing was noise, so the model fell back on generic value-plus-need for the
-skill positions.
-
-That may have been the wrong variable. A manager who thinks "I already have
-two backs, so a third is worth less to me than my empty tight end seat" is
-following a consistent POLICY, but the round in which that policy fires
-depends on how the board falls — so it reads as noise on the calendar and as
-signal on the roster state.
-
-Metrics, all computed on non-keeper picks with the roster state reconstructed
-pick by pick:
-
-  need_rate    Of picks made while at least one STARTER seat was empty, the
-               fraction that filled one. High = fills the lineup first.
-               Low = takes the best player regardless.
-
-  depth_rate   Of picks in rounds 1-8, the fraction spent on a position whose
-               starter seats were already full (a 3rd RB, a 3rd WR).
-               High = stacks a position; low = spreads.
-
-  concentration  Largest share any single position took of the manager's
-               first six picks. High = doubles and triples up early.
-
-Each is tested the same way as before: variance BETWEEN managers against
-variance WITHIN a manager across years. A ratio above ~1 means managers
-differ from each other more than they differ from themselves — a real trait.
-"""
-
 import re
 from pathlib import Path
 
