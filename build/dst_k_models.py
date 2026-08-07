@@ -1,8 +1,4 @@
 """
-Draftmark Phase 4 prerequisite — real D/ST and kicker weekly distributions
-from 2025 play-by-play and final scores. No Vegas required (Vegas remains a
-forward-looking sharpener); no invented numbers.
-
 Python only ASSEMBLES stat lines. Scoring happens exclusively through
 src/scoring.js (scoreDST / scoreKicker) via build/score_dstk.js — the
 one-implementation rule holds.
