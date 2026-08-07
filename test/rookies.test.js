@@ -1,16 +1,4 @@
 "use strict";
-
-/**
- * Regression guard for the rookie bug class.
- *
- * The original defect: every player with no 2025 NFL snaps collapsed into one
- * undifferentiated bucket — half the positional prior, expected_games 4.6,
- * yardage_model null. A 3rd-overall pick scored identically to a camp body and
- * ranked RB213 of 213. The first fix then OVERCORRECTED, extrapolating a
- * log-link curve below its data support until the same rookie outranked
- * McCaffrey. Both directions are tested here.
- */
-
 const fs = require("fs");
 const path = require("path");
 const dist = require("../src/distributions.js");
@@ -30,14 +18,12 @@ function ok(name, cond, detail) {
 const P = bundle.players;
 const rookies = P.filter((p) => p.td_model.fitted_from === "rookie_draft_capital");
 
-// ---- structural: no player is scored as a null ----
 ok("no player has a null yardage model",
    P.every((p) => p.yardage_model), String(P.filter((p) => !p.yardage_model).length));
 ok("rookies exist and are identified", rookies.length > 100, String(rookies.length));
 ok("every rookie carries a yardage model", rookies.every((p) => p.yardage_model));
 ok("every rookie has a non-zero lambda", rookies.every((p) => p.td_model.lambda_base > 0));
 
-// ---- differentiation: draft capital actually separates rookies ----
 {
   const rbs = rookies.filter((p) => p.position === "RB");
   const lams = new Set(rbs.map((p) => p.td_model.lambda_base.toFixed(4)));
@@ -47,8 +33,6 @@ ok("every rookie has a non-zero lambda", rookies.every((p) => p.td_model.lambda_
   ok("rookie availability is differentiated, not a constant 4.6",
      games.size > 5 && !(games.size === 1 && games.has(4.6)), `${games.size} distinct`);
 }
-
-// ---- ordering: earlier picks project higher, within position ----
 {
   const withPick = rookies
     .map((p) => ({ p, pick: (p.notes.find((n) => n.includes("pick ")) || "").match(/pick (\d+)/) }))
@@ -63,7 +47,6 @@ ok("every rookie has a non-zero lambda", rookies.every((p) => p.td_model.lambda_
      early > late);
 }
 
-// ---- the overcorrection guard: no rookie outranks the proven elite ----
 {
   const players = P.map((p) => ({
     id: p.draftmark_id, name: p.name, position: p.position,
@@ -93,7 +76,6 @@ ok("every rookie has a non-zero lambda", rookies.every((p) => p.td_model.lambda_
   }
 }
 
-// ---- sanity: rookie rates stay inside the physically observed range ----
 {
   const maxLam = Math.max(...rookies.map((p) => p.td_model.lambda_base));
   ok(`no rookie exceeds the sustained TD-rate ceiling (max ${maxLam.toFixed(3)}/g)`,
@@ -102,7 +84,6 @@ ok("every rookie has a non-zero lambda", rookies.every((p) => p.td_model.lambda_
      rookies.every((p) => p.availability.expected_games <= 16));
 }
 
-// ---- honesty: the board can explain the projection ----
 ok("every rookie carries a note naming its basis",
    rookies.every((p) => p.notes.some((n) => n.startsWith("rookie ("))),
    String(rookies.filter((p) => !p.notes.some((n) => n.startsWith("rookie ("))).length));
