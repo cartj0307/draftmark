@@ -13,20 +13,10 @@ function generateOrder(teams, rounds) {
   return cells;
 }
 
-/** All overall pick numbers belonging to one slot. */
 function picksForSlot(cells, slot) {
   return cells.filter((c) => c.slot === slot).map((c) => c.overall);
 }
 
-// ----------------------------------------------------------------- fold ----
-
-/**
- * Fold the event log into the full board state.
- *
- * Correction never rewrites in place — VOID and AMEND are appended and
- * interpreted here, so a fix at pick 44 cascades correctly through 45-50
- * because live picks simply fill sequential open cells on every refold.
- */
 function fold(events, config) {
   const teams = config.teams;
   const rounds = config.draft.rounds;
@@ -114,12 +104,6 @@ function fold(events, config) {
   };
 }
 
-// -------------------------------------------------------------- rosters ----
-
-/**
- * Assign one slot's picks to starter/bench/overflow per league roster rules,
- * in pick order: first open starter seat for the position, else bench.
- */
 function rosterView(picks, playersById, rosterCfg) {
   const seats = [];
   for (const [pos, n] of Object.entries(rosterCfg.starters)) {
@@ -146,16 +130,11 @@ function rosterView(picks, playersById, rosterCfg) {
   return { seats, overflow, counts, warnings };
 }
 
-// --------------------------------------------------------------- search ----
 
 function normName(s) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]/g, "");
 }
 
-/**
- * Rank pool players against a query: prefix > word-prefix > substring,
- * ties broken by expected touchdowns (the league's currency).
- */
 function searchPool(pool, query, posFilter) {
   const q = normName(query || "").trim();
   let list = pool;
@@ -184,8 +163,6 @@ function searchPool(pool, query, posFilter) {
   return scored.map(([, p]) => p);
 }
 
-// ----------------------------------------------------------------- misc ----
-
 let _seq = 0;
 function makeEvent(type, fields, seq) {
   _seq = seq !== undefined ? seq : _seq + 1;
@@ -199,7 +176,6 @@ function makeEvent(type, fields, seq) {
 }
 function resetSeq(n) { _seq = n || 0; }
 
-/** Latest undoable event (PICK / KEEPER / AMEND not already voided). */
 function latestUndoable(events) {
   const voided = new Set(events.filter((e) => e.type === "VOID").map((e) => e.targetId));
   for (let i = events.length - 1; i >= 0; i--) {
