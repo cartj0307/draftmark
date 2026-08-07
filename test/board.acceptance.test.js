@@ -1,15 +1,5 @@
 "use strict";
 
-/**
- * Headless acceptance run for the emitted draft board (Part IV.9):
- *   - full 12-team mock, keyboard-only, no desync
- *   - undo reverts the latest; VOID/AMEND correct past picks with later intact
- *   - sandbox leaves the live log byte-identical
- *   - every departed player on exactly one roster
- *   - countdown correct through the non-standard round 1
- *   - localStorage state refolds identically (refresh-resume equivalence)
- */
-
 const fs = require("fs");
 const path = require("path");
 const { JSDOM } = require(path.join("/tmp/jsdomenv", "node_modules", "jsdom"));
@@ -37,7 +27,6 @@ function type(text) {
   inp.dispatchEvent(new window.Event("input", { bubbles: true }));
 }
 
-// ---- setup phase ----
 ok("setup screen shows on first load", $("setup").classList.contains("show"));
 {
   const sels = doc.querySelectorAll("select.tname");
@@ -56,7 +45,6 @@ ok("setup screen shows on first load", $("setup").classList.contains("show"));
      $("setupMsg").textContent);
   s1.value = orig;
 }
-// declare your keeper: Jonathan Taylor at slot 11
 const keeperInput = doc.querySelector('.tkeeper[data-slot="11"]');
 keeperInput.value = "Jonathan Taylor (RB)";
 // and a rival keeper at slot 3
@@ -67,8 +55,6 @@ ok("pick 1 on the clock (round 1 straight, keepers pre-consumed)",
    $("hdState").textContent.includes("Pick 1 of 192"));
 ok("your countdown reflects keeper-consumed round 1",
    $("countdown").textContent !== "—");
-
-// ---- Phase 3: intelligence in the board ----
 {
   const firstRow = doc.querySelector("#poolBody tr:not(.tierbreak)");
   ok("Val column populated on top row", /\d/.test(firstRow.cells[6].textContent), firstRow.cells[6].textContent);
@@ -90,13 +76,11 @@ ok("your countdown reflects keeper-consumed round 1",
   for (let i = 0; i < 5; i++) key("Tab"); // back to ALL
 }
 
-// ---- keyboard-only picks: best available via empty query + Enter ----
 function pickTop() { type(""); key("Enter"); }
 for (let i = 0; i < 5; i++) pickTop();          // fills cells 1,2,4,5,6 (3 is keeper)
 ok("live picks skip the keeper cell", $("hdState").textContent.includes("Pick 7"),
    $("hdState").textContent);
 
-// name search commit
 type("nacua");
 key("Enter");
 ok("name-search pick lands", doc.querySelector("#recent .who").textContent.includes("Nacua"));
@@ -129,25 +113,17 @@ ok("board reaches pick 12 with your keeper at 11 untouched",
    $("hdState").textContent.includes("Round 1"));
 pickTop(); // pick 12
 ok("round 2 restarts at slot 1 (pick 13)", $("hdState").textContent.includes("Pick 13"));
-
-// countdown check: your next is pick 23 -> 10 picks away
 ok("countdown to your pick 23 is 10", $("countdown").textContent.trim() === "10",
    $("countdown").textContent);
-
-// ---- position filter via Tab cycles ----
 key("Tab"); // QB
 ok("Tab cycles filter to QB", $("cmdMode").textContent.includes("QB"));
 const firstChip = doc.querySelector("#poolBody tr .chip");
 ok("pool filtered to QB rows", firstChip && firstChip.textContent === "QB");
 key("Tab"); key("Tab"); key("Tab"); key("Tab"); key("Tab"); key("Tab"); // back to ALL
 ok("filter cycles back to ALL", $("cmdMode").textContent.includes("ALL"));
-
-// ---- target flag + run detection ----
 type("");                      // top of pool highlighted
 key("F3");
 ok("F3 flags a target", $("targets").textContent.includes("★"));
-
-// ---- sandbox: fork, pick, discard ----
 const liveBefore = window.localStorage.getItem("draftmark_2026");
 key("F6");
 ok("sandbox banner shows", doc.body.classList.contains("sandbox"));
@@ -156,9 +132,6 @@ key("F6");
 ok("sandbox exit discards", !doc.body.classList.contains("sandbox"));
 ok("live log byte-identical after sandbox",
    window.localStorage.getItem("draftmark_2026") === liveBefore);
-
-// ---- corrections: VOID a past pick, later picks cascade ----
-// advance a few picks first
 pickTop(); pickTop(); pickTop();
 const stateBefore = $("hdState").textContent;
 const recentBefore = [...doc.querySelectorAll("#recent .who")].map((e) => e.textContent);
@@ -172,8 +145,6 @@ ok("overlay closes after void", !$("corrOverlay").classList.contains("show"));
 ok("current pick rolled back by one",
    +($("hdState").textContent.match(/Pick (\d+)/)[1]) ===
    +(stateBefore.match(/Pick (\d+)/)[1]) - 1);
-
-// ---- AMEND a past pick ----
 key("F4"); key("ArrowDown"); key("a");
 ok("amend mode armed", doc.body.classList.contains("amending"));
 type("kelce");
@@ -181,8 +152,6 @@ key("Enter");
 ok("amend commits and disarms", !doc.body.classList.contains("amending"));
 ok("amended player appears on the board",
    [...doc.querySelectorAll("#recent .who")].some((e) => e.textContent.includes("Kelce")));
-
-// ---- Phase 5: the recommendation surface (fallback path) ----
 {
   window.runRecommend();
   const t0 = Date.now();
@@ -226,7 +195,6 @@ function nextAvail(s, pos) {
   const b = bundleCfg.players.find((x) => x.position === pos && !s.takenIds.has(x.draftmark_id));
   return b.draftmark_id;
 }
-/* starters first, then depth, never K/DST, respects maxes, no duplicates */
 function pickSkillFor(s, slot) {
   const c = slotCounts(s, slot);
   const st = leagueCfg.roster.starters, mx = leagueCfg.roster.position_max;
@@ -234,8 +202,6 @@ function pickSkillFor(s, slot) {
               : c.RB < mx.RB ? "RB" : c.WR < mx.WR ? "WR" : c.TE < mx.TE ? "TE" : "QB";
   window._dm.append(window._dm.makeEvent("PICK", { playerId: nextAvail(s, order) }));
 }
-
-// ---- position limits mirror ESPN: at-limit positions vanish for that team ----
 {
   const wrs = bundleCfg.players.filter((p) => p.position === "WR").map((p) => p.draftmark_id);
   let wi = 200; // deep enough to avoid anyone already drafted
@@ -282,11 +248,8 @@ function pickSkillFor(s, slot) {
   ok("after their pick, WRs are visible again for the next team",
      [...doc.querySelectorAll("#poolBody tr:not(.tierbreak) .chip")].some((c) => c.textContent === "WR"));
 }
-
-// ---- your final picks funnel to complete the starting lineup (yours only) ----
 {
   const YOUR = 11;
-  // drive to your round-15 pick (overall 170); scripted picks fill starters first
   let g3 = 0;
   while (g3++ < 300) {
     const s = window._dm.state();
@@ -302,7 +265,6 @@ function pickSkillFor(s, slot) {
      shown.size === 2 && shown.has("DST") && shown.has("K"), [...shown].join(","));
   ok("funnel note explains itself", $("more").textContent.includes("completing your starting lineup"),
      $("more").textContent);
-  // other teams are NOT funneled: after your pick, full pool returns for them
   key("Enter"); // take the top (K or DST)
   const afterYour = window._dm.state();
   const yourGot = posOf[afterYour.rosters[YOUR][afterYour.rosters[YOUR].length - 1].playerId] ||
@@ -312,7 +274,6 @@ function pickSkillFor(s, slot) {
   ok("next team is NOT funneled (skill positions legal; punting K/D stays possible)",
      shown.has("QB") && !$("more").textContent.includes("completing your starting lineup"),
      [...shown].join(",") + " | " + $("more").textContent);
-  // drive to your final pick (overall 191)
   let g4 = 0;
   while (g4++ < 60) {
     const s = window._dm.state();
@@ -330,13 +291,9 @@ function pickSkillFor(s, slot) {
   const hasK = done11.some((id) => { const b = bundleCfg.kickers ? null : null; return posOf[id] === undefined && !id.startsWith("dst_"); });
   ok("your roster leaves the draft with both DST and K", hasDst && hasK, done11.slice(-2).join(","));
 }
-
-// ---- run the rest of the draft to completion, keyboard only ----
 let guard = 0;
 while (!$("hdState").textContent.includes("complete") && guard++ < 260) pickTop();
 ok("draft completes (192 cells filled)", $("hdState").textContent.includes("complete"));
-
-// ---- Phase 4: title odds via the main-thread fallback (jsdom has no Worker) ----
 {
   window.runTitleSim(240);   // small N; fallback path yields via setTimeout
   const t0 = Date.now();
@@ -356,8 +313,6 @@ ok("draft completes (192 cells filled)", $("hdState").textContent.includes("comp
   ok("your team is highlighted in the odds", !!doc.querySelector("#simResults .simrow.you"));
   ok("bands shown honestly", rows[0].querySelector(".bd").textContent.includes("±"));
 }
-
-// ---- integrity: every departed player on exactly one roster ----
 const events = JSON.parse(window.localStorage.getItem("draftmark_2026"));
 const st = window.fold(events, JSON.parse($("leagueData").textContent.replace(/<\\\//g, "</")));
 ok("no fold errors at completion", st.errors.length === 0, st.errors.join("; "));
@@ -368,8 +323,6 @@ ok("each roster has exactly 16", Object.values(st.rosters).every((r) => r.length
 ok("takenIds has 192 unique players", st.takenIds.size === 192, String(st.takenIds.size));
 ok("your keeper is Jonathan Taylor at pick 11",
    st.board[10].keeper && window.BY_ID ? true : st.board[10].keeper === true);
-
-// ---- refresh-resume equivalence: saved log refolds identically ----
 const refold = window.fold(JSON.parse(window.localStorage.getItem("draftmark_2026")),
                            JSON.parse($("leagueData").textContent.replace(/<\\\//g, "</")));
 ok("persisted log refolds to identical board",
