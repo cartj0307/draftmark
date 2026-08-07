@@ -1,33 +1,3 @@
-"""
-Draftmark — the rookie prior, fitted from NFL draft capital.
-
-THE BUG THIS FIXES
-------------------
-Every player with no 2025 NFL snaps landed in one undifferentiated bucket:
-lambda = half the positional prior, expected_games = 4.6, yardage_model = null.
-Jeremiyah Love — the 3rd overall pick walking into Arizona's backfield — was
-scored identically to a camp body, and came out RB213 of 213.
-
-The model had no channel through which "this rookie matters and that one
-doesn't" could enter. The signal was sitting unused in the roster file all
-along: `draft_number`, `draft_club`, `years_exp`.
-
-WHAT THIS DOES
---------------
-Fits first-year outcomes against draft slot over the 2023-2025 rookie
-cohorts, per position:
-  - TD rate per game       (Poisson GLM, log games offset, log-slot predictor)
-  - expected games played   (smooth decay in log slot)
-  - rushing / receiving yards per game (for a real yardage model)
-
-Draft slot is the only honest pre-season signal available offline: it encodes
-what 32 professional front offices concluded, and it predicts opportunity,
-which is what this whole project says drives touchdowns. Undrafted players are
-assigned a nominal slot past the last pick.
-
-Writes data/interim/rookie_model.json.
-"""
-
 import json
 from pathlib import Path
 
