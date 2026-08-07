@@ -1,43 +1,8 @@
-/**
- * Draftmark recommender — Phase 5 (Part VII).
- *
- * The question the whole tool exists to answer: "who do I take, right now,
- * to maximize the probability of winning the championship?"
- *
- * Method: for each plausible candidate, assume you take him, complete the
- * remaining draft for all twelve teams (greedy value + roster need, seeded
- * jitter for opponents, your own future picks respecting the lineup-completion
- * funnel), then run the championship simulator. COMMON RANDOM NUMBERS: every
- * candidate is evaluated on the identical stream of simulated seasons — same
- * opponent drafts, same injuries, same weekly outcomes — so the difference in
- * title probability is the pick's signal, not Monte Carlo noise.
- *
- * The answer comes with its own uncertainty attached (the honesty tax): when
- * the edge between the top two is inside the noise floor, the verdict says
- * "either is fine" instead of manufacturing false precision.
- *
- * Pure module. Deps injected via configureRecommend (sim + value functions).
- */
-
 "use strict";
 
 let R = null; // { prepareSimPlayers, runChampionshipSim, makeRng }
 
-/* MEASURED from three years of this league's drafts (build/analyze_policy.py):
- * when a manager has an empty QB/RB/WR/TE starter seat, the fraction of picks
- * that fill one — 171 of 182 in rounds 1-6. This is a genuine choice, not
- * roster math: taking a third back in round 4 is legal and they essentially
- * never do it. A soft value multiplier let the simulated opponents stack far
- * more than the real ones do, which distorted every survival estimate. */
 const STARTER_FIRST_BY_ROUND = { 1: 1.00, 2: 1.00, 3: 1.00, 4: 0.95, 5: 0.70, 6: 0.50, 7: 0.20 };
-/* NOTE: these are ENFORCEMENT probabilities, deliberately below the observed
- * fill rates (1.00/1.00/1.00/0.97/0.94/0.76/0.36). When the rule does not fire
- * the value scoring still favours filling a seat, so enforcing at the observed
- * rate overshoots. Calibrated so the SIMULATED rate matches the real one —
- * validated in test/opponents.test.js. */
-
-/** Empty starter seats at the skill positions (K/DST are governed separately
- *  by the round floor, so they are excluded here). */
 function openSkillSeats(counts, starters) {
   const open = new Set();
   for (const [pos, n] of Object.entries(starters)) {
@@ -47,8 +12,6 @@ function openSkillSeats(counts, starters) {
   return open;
 }
 function configureRecommend(deps) { R = deps; }
-
-/* ------------------------------------------------------------ helpers ---- */
 
 function countsBySlot(rosters, posOf) {
   const out = {};
@@ -60,15 +23,6 @@ function countsBySlot(rosters, posOf) {
   return out;
 }
 
-/** Urgency per position = what it COSTS to wait, measured from the board.
- *
- *  A flat "you still need a starter" bonus is wrong: it made the recommender
- *  take a kicker in round 7, because filling the seat looked worth a fixed
- *  amount. But kickers and defenses are flat — the 1st and 6th best are
- *  nearly identical, so waiting costs ~0. Running backs fall off a cliff, so
- *  waiting is expensive. Urgency is that gradient: best available now minus
- *  what is realistically left at your next turn.
- */
 function positionUrgency(pool, lookahead) {
   const k = Math.max(1, Math.min(lookahead || 3, 12));
   const byPos = {};
@@ -86,16 +40,6 @@ function positionUrgency(pool, lookahead) {
   return out;
 }
 
-/** Value of a player GIVEN the roster — scored as VONA, not raw VOR.
- *
- *  You will fill every starter seat eventually, so a seat being open is not
- *  itself worth anything. What is worth something is how much BETTER this
- *  player is than the one you would still get at that position at your next
- *  turn. For defenses and kickers that gap is ~0 (they are interchangeable),
- *  which is why raw VOR kept recommending a defense in round 7. For a running
- *  back sitting on a tier cliff the gap is large. This is the master doc's
- *  VONA (Part V.4) applied per player.
- */
 function marginalValue(p, counts, starters, urgency) {
   const have = counts[p.position] || 0;
   const need = starters[p.position] || 0;
@@ -114,15 +58,6 @@ function emptyStarterSeats(counts, starters) {
   return { n, need };
 }
 
-/* --------------------------------------------------- draft completion ---- */
-/**
- * Complete the remaining draft. openCells: [{slot}] in pick order. pool:
- * ranked array of {id, position, val} best-first. yourSlot's first open cell
- * receives candidateId (if given). Opponents: greedy from the top 3 legal
- * with seeded jitter. Your picks: pure greedy value + need bonus, honoring
- * the lineup-completion funnel and position maxes.
- * Returns { rosters: {slot:[ids]}, taken:Set }.
- */
 function completeDraft(openCells, startRosters, pool, yourSlot, candidateId, rng, cfg, posOf, timing) {
   const rosters = {};
   for (const [s, ids] of Object.entries(startRosters)) rosters[s] = [...ids];
@@ -142,21 +77,13 @@ function completeDraft(openCells, startRosters, pool, yourSlot, candidateId, rng
     const round = cell.round || 1;
     const c = counts[slot] = counts[slot] || {};
     const isYou = String(slot) === String(yourSlot);
-
-    // legality for this slot
     const est = emptyStarterSeats(c, starters);
     const funnel = isYou && est.n > 0 && remainingBySlot[slot] <= est.n ? est.need : null;
-    // Measured league behaviour (see build/analyze_tendencies.py): nobody in
-    // this league has ever taken a K or D/ST before round 7. Without this the
-    // greedy opponents grab them mid-draft and the pool that reaches your pick
-    // is wrong.
+
     const legal = (p) => (c[p.position] || 0) < (mx[p.position] ?? 99) &&
                          (!funnel || funnel.has(p.position)) &&
                          !((p.position === "K" || p.position === "DST") && round < KDST_FLOOR);
 
-    // Per-manager positional timing, applied to OPPONENTS only. Your own
-    // future picks stay pure value+need — profiling yourself would just make
-    // the recommendation self-fulfilling.
     const tprof = (!isYou && timing) ? timing[slot] : null;
     const earliness = (p) => {
       if (!tprof) return 0;
@@ -192,7 +119,6 @@ function completeDraft(openCells, startRosters, pool, yourSlot, candidateId, rng
       scored.sort((a, b) => b[1] - a[1]);
       if (isYou) pickId = scored[0][0].id;
       else {
-        // opponents: top-3 weighted jitter (0.6 / 0.25 / 0.15)
         const u = rng();
         const k = u < 0.6 ? 0 : u < 0.85 ? 1 : 2;
         pickId = scored[Math.min(k, scored.length - 1)][0].id;
@@ -207,16 +133,8 @@ function completeDraft(openCells, startRosters, pool, yourSlot, candidateId, rng
   return { rosters, taken };
 }
 
-/* ------------------------------------------------- candidate selection ---- */
-/**
- * Who is worth simulating? Run one deterministic completion up to your next
- * cell to see who plausibly survives, then take: the top survivors by value,
- * the best survivor at each position where you still need a starter, and any
- * flagged targets that survive. Deduped, legal, capped.
- */
 function selectCandidates(openCells, startRosters, pool, yourSlot, cfg, posOf, flaggedIds, cap, timing) {
   cap = cap || 5;
-  // survivors: greedy-jitter opponents with a fixed probe seed
   const yourIdx = openCells.findIndex((c) => String(c.slot) === String(yourSlot));
   if (yourIdx === -1) return [];
   const probe = completeDraft(openCells.slice(0, yourIdx), startRosters, pool, -1, null,
@@ -245,12 +163,6 @@ function selectCandidates(openCells, startRosters, pool, yourSlot, cfg, posOf, f
   return picks.slice(0, cap);
 }
 
-/* ----------------------------------------------------- the recommender ---- */
-/**
- * evaluateCandidates: one CRN batch of seasons per candidate. State carried in
- * `acc` so the caller can stream batches and stop adaptively.
- * toSimEntry(id) -> sim player input. Returns updated acc.
- */
 function evaluateBatch(ctx, acc, batchSeasons, batchIndex) {
   const { openCells, startRosters, pool, yourSlot, cfg, posOf, toSimEntry, slotTiers } = ctx;
   for (const cand of acc.candidates) {
@@ -287,7 +199,6 @@ function initAccumulator(candidates) {
                                                 titleSum: 0, seasons: 0, p: 0, band: 1 })) };
 }
 
-/** The because: one honest line comparing winner to runner-up. */
 function explain(winner, runner, ctx) {
   const { pool, startRosters, yourSlot, cfg, posOf } = ctx;
   const c = countsBySlot(startRosters, posOf)[yourSlot] || {};
@@ -311,12 +222,6 @@ function explain(winner, runner, ctx) {
   return `highest championship equity across the simulated seasons`;
 }
 
-/** The verdict object the surface renders. */
-/** Standard error of the PAIRED difference between the top two candidates.
- *  Each batch runs every candidate on identical simulated seasons (CRN), so
- *  the per-batch deltas are iid draws of the quantity we care about. Treating
- *  the two absolute probabilities as independent — the old behaviour —
- *  overstated the noise several-fold and made every verdict a "coin flip". */
 function pairedNoise(w, r) {
   if (!r) return w.band;
   const a = w.batchP || [], b = r.batchP || [];
@@ -350,46 +255,6 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = { configureRecommend, completeDraft, selectCandidates, pairedNoise, marginalValue, positionUrgency,
                      initAccumulator, evaluateBatch, verdict, explain };
 }
-
-/* ======================================================================
- * VONA engine — the primary recommendation driver (master doc Part V.4).
- *
- * The season simulator answers "which pick maximizes title probability", but
- * the honest answer is usually "these are within noise of each other", which
- * is useless on the clock. The question that actually separates picks is the
- * one every value-based-drafting method asks: how much better is this player
- * than the one I will STILL be able to get at this position at my next turn?
- *
- * Standard implementations forecast that from league-average ADP. This one
- * forecasts it by simulating the draft forward using each manager's MEASURED
- * tendencies — a strictly better input for one specific league.
- * ====================================================================== */
-
-/**
- * Simulate the draft forward from now to your next pick, many times, and
- * report what survives.
- *
- * Returns {
- *   nextPick,                       // your next overall pick (null if none)
- *   survival: Map(id -> prob),      // P(still on the board at your next pick)
- *   nextBest: {pos -> value},       // E[best value at that position then]
- *   runs
- * }
- */
-/**
- * Simulate the draft forward and report what is likely to be available.
- *
- * TWO distinct quantities — conflating them caused a real inversion:
- *   availNow — P(player is still there when you are next on the clock).
- *              1.0 for everyone if you are on the clock right now.
- *   survival — P(player is still there at the pick AFTER that). This is what
- *              opportunity cost is measured against.
- *
- * CRITICAL: every pool player gets an EXPLICIT probability, including zero.
- * The previous version only recorded players who survived at least once and
- * defaulted everyone else to 1.0 — so a player taken in all 150 futures
- * reported "100% likely to survive", the exact opposite of the truth.
- */
 function survivalForecast(openCells, startRosters, pool, yourSlot, cfg, posOf, timing, runs, trace) {
   runs = runs || 150;
   const empty = { nextPick: null, yourPick: null, onClock: true,
@@ -419,8 +284,6 @@ function survivalForecast(openCells, startRosters, pool, yourSlot, cfg, posOf, t
       const slot = cell.slot, round = cell.round || 1;
       const c = counts[slot] = counts[slot] || {};
       const tp = (timing && timing[slot]) || {};
-      // starter-first: with the measured probability for this round, the
-      // manager restricts himself to players who fill an empty starter seat
       const seats = openSkillSeats(c, starters);
       const strict = STARTER_FIRST_BY_ROUND[round] || 0;
       const enforce = seats.size > 0 && strict > 0 && rng() < strict;
@@ -495,18 +358,6 @@ function survivalForecast(openCells, startRosters, pool, yourSlot, cfg, posOf, t
     availNow, survival, nextBest, runs,
   };
 }
-
-/**
- * Rank the available players for your upcoming pick.
- *
- * score = roster-adjusted value + opportunity cost of NOT taking him now.
- * Per Subvertadown's construction the opportunity cost is ADDED to the
- * baseline rather than replacing it, which keeps the ranking stable instead
- * of lurching each time the forecast shifts.
- *
- * Players who will realistically be gone before your pick are dropped: a
- * recommendation you cannot act on is worse than no recommendation.
- */
 function rankByVona(pool, myRoster, cfg, posOf, forecast, opts = {}) {
   const OPP_WEIGHT = opts.oppWeight ?? 1.0;
   const MIN_AVAIL = opts.minAvail ?? 0.05;
