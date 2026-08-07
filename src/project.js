@@ -1,18 +1,3 @@
-/**
- * Draftmark — expected weekly points via the survival-sum identity.
- *
- * Floors and bonuses do not commute with the mean, so NEVER score the mean
- * stat line. For Y ~ Gamma: E[floor(Y/y0)] = sum over k>=1 of P(Y >= y0*k),
- * and each bonus tier contributes points * P(Y in tier). TD terms are linear
- * so they pass through the mean directly.
- *
- * Every constant comes from config/league.json. Reads a JSON array of player
- * parameter objects on argv[2], writes expected points per game to argv[3].
- *
- * Input row: { id, lambda, pass_td_pg, int_pg,
- *              gammas: { rush: {shape, scale}, rec: {...}, pass: {...} } }
- */
-
 "use strict";
 
 const fs = require("fs");
