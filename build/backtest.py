@@ -1,21 +1,9 @@
 """
-Draftmark Phase 1 — the backtest gate (Part II.8).
-
 Rebuild as of the START of 2025: fit the opportunity->lambda model on
 2023-2024 only, parameterize every player from 2024 usage, project expected
 points per game for 2025 through the survival-sum identity (build/project.js,
 constants from config), and compare Spearman rank correlation against
 realized 2025 points per game (engine-scored) with a minimum of 6 games.
-
-Comparisons:
-  - naive baseline: last year's realized points per game (what a cheat sheet
-    effectively is, restated in league scoring)
-  - ESPN 2025 preseason projections: consumed from
-    data/raw/espn_projections_2025.json when the ESPN ingest has been run
-    (that endpoint is only reachable from your machine).
-
-If the model does not beat the baseline, STOP and find out why before
-building the simulator — cheap in July, expensive in December.
 """
 
 import json
