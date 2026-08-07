@@ -1,12 +1,9 @@
 """
-Draftmark Phase 2 — emit the offline draft board.
-
 Inlines src/draft_core.js, config/league.json, and data/bundle.json into
 app/board_template.html, producing app/draftboard.html: one self-contained
-file that runs from disk in any browser (localStorage works there; it is
-only disabled inside Claude.ai previews).
+file that runs from disk in any browser.
 
-Rerun after any bundle rebuild so the board carries fresh data.
+Rerun after any bundle rebuild.
 """
 
 import json
