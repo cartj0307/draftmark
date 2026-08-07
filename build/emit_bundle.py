@@ -1,21 +1,3 @@
-"""
-Draftmark Phase 1 — emit bundle.json, the deliverable.
-
-Everything the app needs, offline, under 5 MB:
-  meta / teams (env, real 2026 schedule, bye) / players / dst / kickers.
-
-THE RULE: the bundle stores distributions, never points. There is no
-projected_points field anywhere — enforced by a hard assertion on the final
-serialized output. Points are computed on demand by scoring.js from sampled
-stat lines.
-
-Pending inputs (real ingests exist, run them where those APIs are reachable):
-  - Vegas implied totals   -> build/ingest_vegas.py   (drives team TD env, DST, K)
-  - ESPN projections + ADP -> build/ingest_espn.py    (consensus prior, shrinkage)
-  - Sleeper depth/injury   -> build/ingest_sleeper.py (handcuffs, status refresh)
-The emitter consumes their outputs from data/raw/ automatically when present.
-"""
-
 import json
 import sys
 from datetime import date
