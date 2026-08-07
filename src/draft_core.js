@@ -1,32 +1,5 @@
-/**
- * Draftmark draft core — Phase 2.
- *
- * State is an append-only event log; the board is a pure function of it:
- *     draftState = events.reduce(applyEvent, initialState)
- * Nothing is mutated in place. Undo is trivial, drift impossible,
- * persistence one line, correction safe.
- *
- * Event vocabulary (Part IV.1):
- *   { id, seq, type:"SETUP",  teams:[{slot,name}], yourSlot }
- *   { id, seq, type:"KEEPER", slot, playerId }
- *   { id, seq, type:"PICK",   playerId }            // fills next open cell
- *   { id, seq, type:"VOID",   targetId }            // logical delete
- *   { id, seq, type:"AMEND",  targetId, playerId }  // correct a pick's player
- *
- * Pure module: no DOM, no storage. Runs in node (tests) and the browser
- * (inlined into the board).
- */
-
 "use strict";
 
-// ---------------------------------------------------------------- order ----
-
-/**
- * Full cell order for the draft (Part IV.2, validated against the slot-11
- * pick list in Part I.6): round 1 straight 1->12, round 2 restarts at slot 1,
- * round 3+ snakes (odd rounds descend, even ascend).
- * Returns array of { overall, round, slot }.
- */
 function generateOrder(teams, rounds) {
   const cells = [];
   let overall = 1;
