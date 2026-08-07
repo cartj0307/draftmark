@@ -1,25 +1,3 @@
-"""
-Draftmark — Vegas ingest, FALLBACK path: a hand-entered CSV.
-Can never break, costs nothing, works when no API has lines posted.
-
-1. Open any free odds page (Covers, VegasInsider, any sportsbook).
-2. Fill data/raw/vegas_manual.csv with one row per game:
-
-       home,away,total,home_spread
-       PHI,DAL,47.5,-4.5
-       KC,BUF,49.0,1.5
-
-   Teams are nflverse abbreviations (WAS not WSH, LA for the Rams).
-   home_spread is negative when the HOME team is favored.
-   Week 1 alone is enough preseason (16 rows, ~2 minutes).
-
-3. Run:  python3 build/ingest_vegas_csv.py
-4. Rerun build/emit_bundle.py.
-
-Output is byte-compatible with the ESPN odds ingest — nothing downstream
-knows which source produced it.
-"""
-
 import csv
 import json
 from collections import defaultdict
