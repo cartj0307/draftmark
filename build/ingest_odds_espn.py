@@ -1,22 +1,3 @@
-"""
-Draftmark — Vegas ingest, PRIMARY path: ESPN's public scoreboard API.
-Free, keyless, same API family as the projections ingest. Run on YOUR machine.
-
-    python3 build/ingest_odds_espn.py                 # scan all weeks with posted lines
-    python3 build/ingest_odds_espn.py --weeks 1 2 3   # specific weeks only
-
-For each game with posted odds it computes each team's implied total with the
-doc's formula (implied total equals half the game total minus half the team's
-spread) and averages across all posted games per team. Preseason that's
-usually week 1 plus look-ahead lines; in-season rerun weekly.
-
-Writes data/raw/vegas_totals.json — identical shape to every other Vegas
-path, so nothing downstream knows which source produced it. Rerun
-build/emit_bundle.py afterwards.
-
-Fallback if lines aren't posted yet: build/ingest_vegas_csv.py (hand-entered).
-"""
-
 import argparse
 import json
 import re
