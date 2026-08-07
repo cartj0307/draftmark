@@ -1,19 +1,3 @@
-"""
-Does manager draft history actually contain signal?
-
-Before building a per-manager opponent model, measure whether one exists.
-Roster rules force most of the positional distribution (everyone must end with
-1QB/2RB/2WR/1TE/1K/1DST), so raw positional counts are nearly identical by
-construction. The only place preference can show up is TIMING: how early each
-manager reaches for a position relative to the league.
-
-The test: for each manager, compute the average round of their first QB / TE /
-K / DST and their RB-vs-WR share through round 6. Then compare the spread
-BETWEEN managers to the spread WITHIN a manager across years. If a manager
-differs from himself year to year as much as he differs from the field, the
-"profile" is noise and modelling it would inject false confidence.
-"""
-
 import re
 from pathlib import Path
 
