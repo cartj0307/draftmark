@@ -1,16 +1,4 @@
 "use strict";
-/**
- * Unbiased mock draft + season simulation.
- *
- * Opponents pick from the value board, nudged by their MEASURED tendencies
- * (QB/K/DST timing from build/analyze_tendencies.py — the only traits that
- * separated from noise). No human guessing about who takes whom, which is the
- * entire point: a hand-run mock is contaminated by wanting certain players to
- * fall to you.
- *
- * Your picks: round 2 is forced to the best available RB, every pick after
- * that is the recommender's argmax championship probability.
- */
 
 const fs = require("fs");
 const path = require("path");
