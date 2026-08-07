@@ -1,18 +1,3 @@
-"""
-Draftmark — nflverse ingest (the primary source; free, GitHub-hosted).
-
-    python3 build/ingest_nflverse.py
-
-Downloads into data/raw/:
-  play_by_play_{2023,2024,2025}.parquet   (releases/pbp)
-  player_stats_{2023,2024,2025}.parquet   (releases/player_stats)
-  roster_2025.parquet, roster_2026.parquet (releases/rosters)
-  games.csv                                (real schedule incl. 2026)
-  ff_playerids.csv                         (dynastyprocess crosswalk)
-
-Skips files already present; pass --force to refetch.
-"""
-
 import argparse
 import sys
 from pathlib import Path
