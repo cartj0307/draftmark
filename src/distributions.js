@@ -1,19 +1,3 @@
-/**
- * Draftmark distributions — Phase 1 runtime library.
- *
- * Negative Binomial touchdown sampling and Gamma yardage sampling/survival.
- * Pure math, no I/O. Consumed by Phase 3 (survival-sum projection identity)
- * and Phase 4 (the correlated weekly draw).
- *
- * Parameterization:
- *   NB(lambda, phi): mean lambda, variance lambda + lambda^2/phi.
- *   As phi -> infinity this approaches Poisson(lambda) — which is what the
- *   2023-2025 fit supports at the population level (phi ~ 200 for most
- *   positions). Sampled as Poisson with Gamma-mixed rate (the standard
- *   NB construction), so one code path covers both regimes.
- *   Gamma(shape k, scale theta): mean k*theta, variance k*theta^2.
- */
-
 "use strict";
 
 // ---------- uniform RNG plumbing (injectable for common random numbers) ----
