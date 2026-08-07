@@ -1,24 +1,5 @@
-/**
- * Draftmark intelligence layer — Phase 3 (Part V).
- *
- * Pure module, no DOM. Consumes bundle player objects + league config,
- * produces the league-ranked view of the pool:
- *
- *   expectedWeek / expectedSeason  — the survival-sum identity (V.1):
- *       E[floor(Y/y0)] = sum over k>=1 of P(Y >= y0*k); bonuses by tier
- *       probability. NEVER scores a mean stat line.
- *   computeValues                  — VOR against shallow no-flex replacement (V.2)
- *   detectTiers                    — gap heuristic within position (V.3)
- *   survivalProb / expectedBestAt  — pair-aware ADP survival (V.4)
- *   vonaByPosition                 — value of next available, pair-aware (V.4)
- *   playoffTilt                    — weeks 15-17 vs base, a tiebreaker (V.5)
- *
- * Needs gammaSurvival from distributions.js (injected or global).
- */
-
 "use strict";
 
-/* dependency injection so node tests and the inlined browser build both work */
 let _gammaSurvival = (typeof gammaSurvival !== "undefined") ? gammaSurvival : null;
 function useGammaSurvival(fn) { _gammaSurvival = fn; }
 
@@ -74,7 +55,6 @@ function expectedSeason(player, league) {
   return e * avail;
 }
 
-/** Playoff tilt: mean weekly E over weeks 15-17 minus base-week mean, as a %. */
 function playoffTilt(player, league) {
   const tm = player.td_model;
   if (!tm || !tm.lambda_weekly) return null;
@@ -89,11 +69,6 @@ function playoffTilt(player, league) {
   return rm > 0 ? (pm / rm - 1) : null;
 }
 
-/**
- * VOR for a set of pool players (skill positions with models). Replacement is
- * the r-th ranked E[F_season] within position, r from config (V.2). Returns
- * map id -> { es, vor } plus replacement levels.
- */
 function computeValues(players, league) {
   const byPos = {};
   const es = new Map();
@@ -117,14 +92,6 @@ function computeValues(players, league) {
   return { values: out, replacement: repl };
 }
 
-/**
- * Tier detection (V.3): within a position, sorted by VOR descending, tier
- * breaks are the LARGEST gaps — bounded, because tiers exist to answer "will
- * this tier survive to my next pick", and nine tiers answer nothing. Rules:
- * consider the draftable window (2x replacement level); a break needs a gap
- * of at least MIN_GAP points; at most MAX_TIERS tiers; the biggest gaps win.
- * Returns id -> tier (1-based); players beyond the window join the last tier.
- */
 function detectTiers(players, values, league) {
   const MIN_GAP = 4.0, MAX_TIERS = 6;
   const tiers = new Map();
@@ -178,10 +145,6 @@ function survivalProb(player, k) {
   return 1 - normCdf(z);
 }
 
-/**
- * Expected best E[F] at your pick k among a position's pool:
- * iterate best-first; P(best available is i) = surv_i * prod_{j better}(1-surv_j).
- */
 function expectedBestAt(list, values, k) {
   let acc = 0, probAllGone = 1;
   for (const p of list) {
@@ -193,10 +156,6 @@ function expectedBestAt(list, values, k) {
   return acc;
 }
 
-/**
- * Pair-aware VONA (V.4): for each position, the drop from taking the best now
- * versus the expected best still there at your next relevant pick.
- */
 function vonaByPosition(pool, values, nextPick) {
   const out = {};
   const byPos = {};
