@@ -1,15 +1,3 @@
-"""
-Draftmark — ESPN ingest. Run on YOUR machine (this API is not reachable from
-sandboxed builds): projections as a consensus prior + ADP, snapshot once,
-never called live during the draft.
-
-    python3 build/ingest_espn.py            # 2026 priors -> data/raw/espn_players.json
-    python3 build/ingest_espn.py --backtest # 2025 preseason projections for the gate
-
-Endpoint: ESPN fantasy read API, view=kona_player_info, paged via the
-x-fantasy-filter header. No auth needed for public player data.
-"""
-
 import argparse
 import json
 import time
