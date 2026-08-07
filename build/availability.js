@@ -1,15 +1,4 @@
 "use strict";
-/**
- * Who is actually likely to be there when you pick?
- *
- * One mock draft answers "who was available in this sample". That is not the
- * question. Running many drafts with different randomness answers "how often
- * does this player survive to my pick" — which is what you plan around, and
- * which no hand-run mock can give you because you cannot re-roll your own bias.
- *
- * Opponents pick from the value board nudged by their MEASURED tendencies.
- * Your picks follow marginal value so the board keeps moving realistically.
- */
 
 const fs = require("fs");
 const path = require("path");
