@@ -1,17 +1,4 @@
 "use strict";
-/**
- * Do the simulated opponents behave like this league actually drafts?
- *
- * Every survival probability the board shows rests on the opponent model. If
- * the simulated managers stack a third running back in round 4 when the real
- * ones never do, every "% likely to be there" is wrong in a way no amount of
- * extra simulation runs will fix.
- *
- * Ground truth, measured over 2023-2025 (build/analyze_policy.py): given an
- * empty QB/RB/WR/TE starter seat, the fraction of picks that filled one was
- * 171 of 182 across rounds 1-6 — 100/100/100/97/94/76 percent by round.
- */
-
 const fs = require("fs");
 const path = require("path");
 const dist = require("../src/distributions.js");
@@ -34,7 +21,6 @@ function ok(name, cond, detail) {
   if (cond) pass++; else { fail++; console.error(`  FAIL ${name}${detail ? " — " + detail : ""}`); }
 }
 
-/* ---- pool ---- */
 const skill = bundle.players.map((p) => ({
   id: p.draftmark_id, name: p.name, position: p.position, team: p.team,
   td_model: p.td_model, yardage_model: p.yardage_model, availability: p.availability }));
@@ -56,8 +42,6 @@ const POOL = [
 ].sort((a, b) => (b.val ?? -1e6) - (a.val ?? -1e6));
 const BY_ID = Object.fromEntries(POOL.map((p) => [p.id, p]));
 const posOf = (id) => (BY_ID[id] ? BY_ID[id].position : "?");
-
-/* ---- simulate the whole draft as opponents, via a sentinel pick at the end ---- */
 const cells = core.generateOrder(league.teams, league.draft.rounds)
   .map((c) => ({ slot: c.slot, round: c.round, overall: c.overall }));
 cells.push({ slot: 99, round: 17, overall: 999 });
@@ -90,15 +74,12 @@ const rms = Math.sqrt(sse / k);
 console.log(`\n  RMS error vs the real league: ${(rms * 100).toFixed(1)} pct pts`);
 ok(`opponent model reproduces the league within 8 pct pts RMS`, rms < 0.08, rms.toFixed(3));
 
-/* the specific behaviour that was wrong before: stacking depth too early */
 {
   const early = trace.filter((t) => t.round <= 4 && t.hadSeat);
   const stacked = early.filter((t) => !t.filledSeat).length;
   ok(`opponents rarely take depth in rounds 1-4 (${stacked}/${early.length})`,
      stacked / early.length < 0.06, `${(stacked / early.length * 100).toFixed(1)}%`);
 }
-
-/* kickers and defenses must still respect the measured round floor */
 {
   const tooEarly = trace.filter((t) => (t.pos === "K" || t.pos === "DST") && t.round < 7);
   ok("no simulated K or D/ST before round 7", tooEarly.length === 0, String(tooEarly.length));
