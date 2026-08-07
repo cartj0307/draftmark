@@ -1,15 +1,3 @@
-"""
-Draftmark — Sleeper ingest. Run on YOUR machine. Free, no key.
-
-    python3 build/ingest_sleeper.py
-
-Pulls the full master player list (https://api.sleeper.app/v1/players/nfl —
-~5 MB, Sleeper asks that you call it at most once per day), extracts injury
-status + depth charts, derives RB handcuffs (depth-chart #2 behind a #1 on
-the same team), and writes data/raw/sleeper_players.json. Rerun
-build/emit_bundle.py afterwards.
-"""
-
 import json
 from pathlib import Path
 
