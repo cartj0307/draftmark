@@ -1,35 +1,3 @@
-/**
- * Draftmark season simulator — Phase 4 (Part VI).
- *
- * For any set of twelve rosters: each team's championship probability, by
- * simulating the season thousands of times.
- *
- * The weekly draw (VI.2): touchdowns are drawn FIRST and CORRELATED (62% of
- * the outcome) through a Gaussian factor copula; yardage is sampled from the
- * fitted Gammas; the sampled line is scored through scoring.js — never the
- * mean. Yardage correlation is deliberately left independent (second-order;
- * the doc's priority is correlating N).
- *
- * Correlation structure (VI.4), via two factors per NFL team:
- *   pass-game factor:  QB loading +0.55, WR/TE +0.45  -> QB<->catcher rho ~ +0.25
- *   backfield factor:  RB1 +0.45, RB2 -0.45           -> RB<->RB rho ~ -0.20
- *   D/ST rides the pass-game factor at +0.30           -> DST<->own offense +
- * Common random numbers arise naturally: each NFL player's weekly outcome is
- * drawn once league-wide per simulated week, shared by whichever fantasy
- * matchup he appears in.
- *
- * Season path (VI.5): per sim, season modifiers per player (talent multiplier,
- * weekly availability); weeks 1-14 head-to-head on an 11-game round robin plus
- * three cross-division rematch weeks (the league's structure — the real three
- * lock in when ESPN posts them); optimal no-flex lineups chosen by pre-week
- * expectation, scored by realized outcome; 6-team bracket, top-2 byes, no
- * reseeding, points-for seeding tiebreak, QB-points matchup tiebreak.
- *
- * Pure module: needs score() from scoring.js, samplers from distributions.js,
- * expectedWeek from intel.js — injected via configure() so node tests and the
- * inlined browser/worker build both work.
- */
-
 "use strict";
 
 let D = null; // { score, sampleGamma, samplePoisson, sampleNegBin, gaussian, normCdf, expectedWeek }
@@ -47,13 +15,6 @@ function makeRng(seed) {
   };
 }
 
-/* ---------------- fantasy schedule (VI.5) ---------------------------------- */
-/**
- * Weeks 1-11: circle-method round robin (every team once).
- * Weeks 12-14: three cross-division matching weeks (tier1 vs tier2 perfect
- * matchings, sampled per season until the real schedule posts).
- * slots: array 1..12; tier of slot from setup team names + league divisions.
- */
 function buildSchedule(slotTier, rng) {
   const n = 12;
   const weeks = [];
@@ -82,11 +43,6 @@ function buildSchedule(slotTier, rng) {
   return weeks; // weeks[w] = array of [slotA, slotB]
 }
 
-/* ---------------- one simulated week of player outcomes -------------------- */
-/**
- * players: prepared array (see prepare()). Returns Int16Array of points
- * aligned to players[], with -32768 marking unavailable (bye / missed).
- */
 function drawWeek(players, week, mods, rng, cfg) {
   const factors = {}; // nflTeam -> [gPass, gBack]
   const pts = new Int16Array(players.length);
@@ -118,8 +74,6 @@ function drawWeek(players, week, mods, rng, cfg) {
     }
     const line = { rushTD: n };
 
-    // ---- correlated yardage via Wilson–Hilferty Gamma quantiles ----
-    // receiving rides the team pass factor; rushing rides the backfield factor
     if (p.gRec) {
       const z = p.recLoad * gP + p.recResid * D.gaussian(rng);
       line.recYds = Math.round(gammaQuantileWH(p.gRec.shape, p.gRec.scale, z, rng) * talent);
@@ -128,8 +82,6 @@ function drawWeek(players, week, mods, rng, cfg) {
       const z = p.rushLoad * gB + p.rushResid * D.gaussian(rng);
       line.rushYds = Math.round(gammaQuantileWH(p.gRush.shape, p.gRush.scale, z, rng) * talent);
     }
-
-    // ---- QB passing: pass TDs share the pass-game factor (the stack mechanism) ----
     if (p.passTdPg > 0.01) {
       const z = 0.55 * gP + p.passResid * D.gaussian(rng);
       const u = D.normCdf(z);
@@ -149,19 +101,12 @@ function drawWeek(players, week, mods, rng, cfg) {
   return pts;
 }
 
-/** Gamma quantile at Phi(z), Wilson–Hilferty; falls back to an independent
- * exact sample for tiny shapes where WH is inaccurate (contribution small). */
 function gammaQuantileWH(shape, scale, z, rng) {
   if (shape < 0.25) return D.sampleGamma(shape, scale, rng);
   const c = 1 - 1 / (9 * shape) + z / (3 * Math.sqrt(shape));
   return Math.max(0, shape * scale * c * c * c);
 }
 
-/* ---------------- optimal no-flex lineup (VI.3) ---------------------------- */
-/**
- * Honest lineup-setting: choose seats by pre-week expectation (ew), score by
- * realized points. Returns { total, qbPts } or null seats contribute 0.
- */
 function lineupScore(rosterIdx, players, realized, ew, week, starters) {
   const byPos = { QB: [], RB: [], WR: [], TE: [], DST: [], K: [] };
   for (const i of rosterIdx) {
@@ -181,12 +126,6 @@ function lineupScore(rosterIdx, players, realized, ew, week, starters) {
   return { total, qbPts };
 }
 
-/* ---------------- the full simulation (VI.5) -------------------------------- */
-/**
- * prepare(): normalize bundle-shaped inputs once.
- * playersIn: [{id, kind:"skill"|"dstk", position, team, bye, td_model?,
- *              yardage_model?, availability?, mean?, sd?}]
- */
 function prepareSimPlayers(playersIn, league) {
   const players = playersIn.map((p) => {
     if (p.kind === "dstk") {
@@ -212,7 +151,6 @@ function prepareSimPlayers(playersIn, league) {
       expGames: (p.availability && p.availability.expected_games) || 15,
     };
   });
-  // mark RB2s per NFL team for the negative backfield loading
   const rbByTeam = {};
   players.forEach((p, i) => { if (p.kind === "skill" && p.position === "RB") (rbByTeam[p.team] = rbByTeam[p.team] || []).push(i); });
   for (const idxs of Object.values(rbByTeam)) {
@@ -227,7 +165,7 @@ function prepareSimPlayers(playersIn, league) {
     p.rushResid = Math.sqrt(Math.max(0, 1 - p.rushLoad * p.rushLoad));
     p.passResid = Math.sqrt(1 - 0.55 * 0.55);
   }
-  // per-player per-week expectation for honest lineup choice
+
   const ew = players.map((p) => {
     const arr = new Float32Array(17);
     for (let w = 1; w <= 17; w++) {
@@ -243,12 +181,6 @@ function prepareSimPlayers(playersIn, league) {
   return { players, ew };
 }
 
-/**
- * runChampionshipSim(rosters, prepared, league, opts)
- *   rosters: { slot(1..12): [indices into prepared.players] }
- *   slotTier: { slot: 1|2 }
- * Returns { titles: {slot: prob}, seasons, band, playoffs: {slot: prob} }.
- */
 function runChampionshipSim(rosters, prepared, league, slotTier, opts = {}) {
   const N = opts.seasons || 2000;
   const rng = makeRng(opts.seed || 12345);
@@ -257,7 +189,6 @@ function runChampionshipSim(rosters, prepared, league, slotTier, opts = {}) {
   const cfg = league;
   const titles = {}, playoffs = {};
   for (let s = 1; s <= 12; s++) { titles[s] = 0; playoffs[s] = 0; }
-  // precompute each roster's indices grouped by position (fixed for the run)
   const rosterPos = {};
   for (let s = 1; s <= 12; s++) {
     const g = { QB: [], RB: [], WR: [], TE: [], DST: [], K: [] };
@@ -295,15 +226,11 @@ function runChampionshipSim(rosters, prepared, league, slotTier, opts = {}) {
         else (sa.qbPts >= sb.qbPts ? wins[a]++ : wins[b]++);   // QB-points tiebreak
       }
     }
-
-    // seeding: wins, then points-for
     const order = [];
     for (let s = 1; s <= 12; s++) order.push(s);
     order.sort((a, b) => wins[b] - wins[a] || pf[b] - pf[a]);
     const seeds = order.slice(0, 6);
     for (const s of seeds) playoffs[s]++;
-
-    // each playoff week's league-wide outcome is drawn once and shared
     const poWeek = {};
     const h2h = (a, b, w) => {
       const realized = poWeek[w] || (poWeek[w] = drawWeek(players, w, mods, rng, cfg));
@@ -312,7 +239,6 @@ function runChampionshipSim(rosters, prepared, league, slotTier, opts = {}) {
       if (ra.total !== rb.total) return ra.total > rb.total ? a : b;
       return ra.qbPts >= rb.qbPts ? a : b;
     };
-    // wk15: 3v6, 4v5 (1,2 bye) ; wk16 no reseed: 1 vs W(4/5), 2 vs W(3/6); wk17 final
     const w45 = h2h(seeds[3], seeds[4], 15);
     const w36 = h2h(seeds[2], seeds[5], 15);
     const f1 = h2h(seeds[0], w45, 16);
@@ -330,8 +256,6 @@ function runChampionshipSim(rosters, prepared, league, slotTier, opts = {}) {
   const band = (p) => 1.96 * Math.sqrt(Math.max(p * (1 - p), 1e-6) / N);
   return { titles: out, playoffs: po, seasons: N, band };
 }
-
-/** Fast lineup: top-k by pre-week expectation via linear scan, scored by outcome. */
 function lineupScoreFast(posGroups, players, realized, ew, week, starters) {
   let total = 0, qbPts = 0;
   for (const pos in starters) {
