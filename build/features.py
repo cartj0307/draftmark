@@ -1,20 +1,3 @@
-"""
-Draftmark Phase 1 — feature extraction from nflverse play-by-play.
-
-Because touchdowns are 62% of scoring, the play-by-play is the whole project.
-This produces, per player-season:
-  - goal-line carries per game  (rush_attempt AND yardline_100 <= 5) — the single most valuable field
-  - red-zone carries / touches per game (yardline_100 <= 10, <= 20)
-  - red-zone targets per game   (pass_attempt AND yardline_100 <= 20)
-  - end-zone targets per game   (air_yards >= yardline_100)
-  - carries per game, targets per game
-  - secondary metrics (target share, air-yards share) — stored, never driving
-and per team-season:
-  - red-zone trips per game, red-zone TD rate, plays per game, offensive TD per game
-
-Regular season only (season_type == 'REG'). Writes data/interim/.
-"""
-
 import sys
 from pathlib import Path
 
