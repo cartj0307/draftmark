@@ -1,11 +1,4 @@
 "use strict";
-/**
- * Does the VONA engine actually separate picks, where the season sim could not?
- *
- * The test that matters: at your real pick 23, does it produce a ranked list
- * with meaningful gaps and a defensible top choice — and does it correctly
- * refuse to recommend a player who is certain to survive to your next turn?
- */
 
 const fs = require("fs");
 const path = require("path");
@@ -128,14 +121,13 @@ for (const r of ranked.slice(0, 10)) {
     `${(r.survival * 100).toFixed(0).padStart(3)}%  ${r.score.toFixed(1).padStart(5)}`);
 }
 
-/* the load-bearing behaviour: a player certain to survive carries no urgency */
 {
   const certain = ranked.filter((r) => r.survival > 0.97 && r.vona > 0);
   ok("players certain to survive get no urgency credit",
      certain.every((r) => Math.abs(r.score - r.base) < 0.5),
      certain.length ? `${certain[0].player.name} score ${certain[0].score} vs base ${certain[0].base}` : "none");
 }
-/* and the ranking must actually separate, unlike the season sim */
+
 {
   const top = ranked.slice(0, 5).map((r) => r.score);
   const spread = top[0] - top[4];
@@ -148,11 +140,6 @@ for (const r of ranked.slice(0, 10)) {
      kd.map((r) => r.player.name).join(","));
 }
 
-/* ---- REGRESSION: the inversion James caught ----
- * A player taken in every simulated future must report ~0% survival, never
- * 100%. The old code only recorded survivors and defaulted everyone missing
- * from that map to 1.0, so the very best players read as "safe to wait on". */
-{
   const emptyRosters = {}; for (let s = 1; s <= 12; s++) emptyRosters[s] = [];
   const allCells = cells.map((c) => ({ slot: c.slot, round: c.round, overall: c.overall }));
   const f0 = rec.survivalForecast(allCells, emptyRosters, POOL, YOU, league, posOf, timing, 60);
