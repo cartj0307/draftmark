@@ -1,20 +1,3 @@
-"""
-Draftmark — Vegas ingest, OPTIONAL THIRD PATH (The Odds API — requires an
-account/key; NOT the default). Use build/ingest_odds_espn.py (free, keyless)
-or build/ingest_vegas_csv.py (hand-entered) instead. Kept only as a spare.
-
-    ODDS_API_KEY=yourkey python3 build/ingest_vegas.py
-
-Pulls NFL game totals and spreads, computes each team's implied total per the
-doc's formula (implied total T equals the game total over two, minus the
-team's spread over two), and averages across all posted 2026 games:
-
-    T = O/2 - L/2      where O = game total, L = team's spread (negative if favored)
-
-Preseason this covers whichever weeks books have posted; in-season rerun
-weekly. Writes data/raw/vegas_totals.json; rerun build/emit_bundle.py after.
-"""
-
 import json
 import os
 import sys
