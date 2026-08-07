@@ -30,8 +30,6 @@ def main():
     prof_path = ROOT / "data" / "league" / "manager_profiles.json"
     profiles = json.loads(prof_path.read_text()) if prof_path.exists() else {"managers": {}, "earliest_K": 7}
 
-    # the board needs the module's functions as globals; the module guard
-    # already no-ops in the browser, nothing to strip.
     out = (template
            .replace("__DRAFT_CORE__", core)
            .replace("__DISTRIBUTIONS__", dist)
