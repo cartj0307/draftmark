@@ -1,9 +1,4 @@
 """
-Draftmark Phase 1 — build the player ID crosswalk.
-
-ESPN ID != Sleeper ID != GSIS ID. A wrong join silently attaches one player's
-goal-line carries to another's projection and nothing throws an error, so:
-
   - Start from nflverse ff_playerids (dynastyprocess) — the widest crosswalk.
   - Join the 2025 nflverse roster on gsis_id (exact) to confirm/fill
     espn_id and sleeper_id.
@@ -11,7 +6,6 @@ goal-line carries to another's projection and nothing throws an error, so:
     players lacking IDs are written to data/interim/xref_review.csv and MUST
     be resolved by hand into config/xref_overrides.json.
 
-Acceptance: zero unresolved fuzzy matches survive into the bundle.
 """
 
 import json
