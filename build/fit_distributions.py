@@ -1,24 +1,3 @@
-"""
-Draftmark Phase 1 — fit the player model.
-
-The core object is lambda, the weekly touchdown rate. Everything else corrects it.
-
-  1. Dispersion phi by position, across 2023-2025 player-weeks (method of
-     moments on the NB relation: variance = lambda + lambda^2 / phi).
-  2. lambda from OPPORTUNITY, not history: Poisson regression of season TDs
-     on goal-line carries, RZ touches, EZ targets, and team environment,
-     with games as exposure. Last year's TD count is contaminated by luck;
-     the opportunity that generated it is not.
-  3. Shrinkage of the fitted rate toward the positional prior by sample size.
-  4. Regression flags: actual TDs minus fitted expectation (run Taylor first).
-  5. Gamma yardage per category per player (moments, shrunk to position).
-  6. Defensive strength by position from engine-scored player-weeks,
-     SHRUNK HARD preseason (Part V.5), -> lambda_weekly over the real
-     2026 schedule with byes at zero.
-
-Writes data/interim/model.parquet + def_mult.json + team_model.json.
-"""
-
 import json
 import subprocess
 from pathlib import Path
