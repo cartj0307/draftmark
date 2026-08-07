@@ -1,6 +1,4 @@
 "use strict";
-/* Scores D/ST and kicker weekly lines through src/scoring.js (scoreDST /
- * scoreKicker). Input data/interim/dstk_lines.json; output dstk_points.json. */
 
 const fs = require("fs");
 const path = require("path");
