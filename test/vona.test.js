@@ -140,15 +140,16 @@ for (const r of ranked.slice(0, 10)) {
      kd.map((r) => r.player.name).join(","));
 }
 
+{
   const emptyRosters = {}; for (let s = 1; s <= 12; s++) emptyRosters[s] = [];
   const allCells = cells.map((c) => ({ slot: c.slot, round: c.round, overall: c.overall }));
   const f0 = rec.survivalForecast(allCells, emptyRosters, POOL, YOU, league, posOf, timing, 60);
   const cmc = byName["Christian McCaffrey"];
   ok("forecast knows you are NOT on the clock at draft start", f0.onClock === false);
   ok("your upcoming pick is 11", f0.yourPick === 11, String(f0.yourPick));
-  const avail = f0.availNow.get(cmc.id);
-  ok(`the consensus #1 does NOT survive 10 picks (availNow ${(avail * 100).toFixed(0)}%)`,
-     avail < 0.15, String(avail));
+  const cmcAvail = f0.availNow.get(cmc.id);
+  ok(`the consensus #1 does NOT survive 10 picks (availNow ${(cmcAvail * 100).toFixed(0)}%)`,
+     cmcAvail < 0.15, String(cmcAvail));
   ok("every pool player has an explicit probability, none defaulted",
      POOL.every((p) => f0.availNow.has(p.id) && f0.survival.has(p.id)));
   const r0 = rec.rankByVona(POOL, [], league, posOf, f0);

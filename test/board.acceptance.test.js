@@ -73,7 +73,16 @@ ok("your countdown reflects keeper-consumed round 1",
   ok("drill-down shows the lambda path", $("drill").textContent.includes("λ path"));
   key("Escape");
   ok("drill-down closes", !$("drillOverlay").classList.contains("show"));
-  for (let i = 0; i < 5; i++) key("Tab"); // back to ALL
+  tabToAll();
+}
+
+/* Tab count is not hardcoded: the filter list grows (QUEUE was added) and a
+ * fixed number of presses silently lands on the wrong view. */
+function tabToAll() {
+  for (let i = 0; i < 12; i++) {
+    if ($("cmdMode").textContent.includes("ALL")) return;
+    key("Tab");
+  }
 }
 
 function pickTop() { type(""); key("Enter"); }
@@ -119,7 +128,7 @@ key("Tab"); // QB
 ok("Tab cycles filter to QB", $("cmdMode").textContent.includes("QB"));
 const firstChip = doc.querySelector("#poolBody tr .chip");
 ok("pool filtered to QB rows", firstChip && firstChip.textContent === "QB");
-key("Tab"); key("Tab"); key("Tab"); key("Tab"); key("Tab"); key("Tab"); // back to ALL
+tabToAll();
 ok("filter cycles back to ALL", $("cmdMode").textContent.includes("ALL"));
 type("");                      // top of pool highlighted
 key("F3");
