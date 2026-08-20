@@ -8,59 +8,174 @@
   "your_team": "Dumpsterfire Igles",
   "your_slot": 11,
   "divisions": {
-    "tier1": ["Russmans' Rappers", "Ern's Tightwads", "Kay's Cuties", "steeltown punishers", "Nick's Bluemeanies", "Nick jr Nighthawks"],
-    "tier2": ["Show Us Your TDs", "Jeff's Mojos", "Dumpsterfire Igles", "Rich's Rednecks", "Nate's Jive Turkeys", "Margo's Blackmagicwomen"]
+    "tier1": [
+      "Russmans' Rappers",
+      "Ern's Tightwads",
+      "Kay's Cuties",
+      "steeltown punishers",
+      "Nick's Bluemeanies",
+      "Nick jr Nighthawks"
+    ],
+    "tier2": [
+      "Show Us Your TDs",
+      "Jeff's Mojos",
+      "Dumpsterfire Igles",
+      "Rich's Rednecks",
+      "Nate's Jive Turkeys",
+      "Margo's Blackmagicwomen"
+    ]
   },
   "roster": {
-    "starters": { "QB": 1, "RB": 2, "WR": 2, "TE": 1, "DST": 1, "K": 1 },
+    "starters": {
+      "QB": 1,
+      "RB": 2,
+      "WR": 2,
+      "TE": 1,
+      "DST": 1,
+      "K": 1
+    },
     "flex": 0,
     "bench": 8,
     "ir": 2,
-    "position_max": { "QB": 3, "RB": 5, "WR": 5, "TE": 3, "DST": 2, "K": 2 }
+    "position_max": {
+      "QB": 3,
+      "RB": 5,
+      "WR": 5,
+      "TE": 3,
+      "DST": 2,
+      "K": 2
+    }
   },
   "schedule": {
-    "regular_season_weeks": [1, 14],
-    "playoff_weeks": [15, 17],
+    "regular_season_weeks": [
+      1,
+      14
+    ],
+    "playoff_weeks": [
+      15,
+      17
+    ],
     "playoff_teams": 6,
     "playoff_byes": 2,
     "reseeding": false,
     "seeding_tiebreaker": "points_for",
     "matchup_tiebreaker": "most_qb_points",
-    "doubleups": { "count": 3, "division": "tier1" }
+    "doubleups": {
+      "count": 3,
+      "division": "tier1"
+    }
   },
   "draft": {
     "rounds": 16,
     "round1": "straight",
     "round2_restart_slot1": true,
     "snake_from_round": 3,
-    "keeper": { "per_team": 1, "cost": "round_1_pick", "renews_annually": true },
-    "your_overall_picks": [11, 23, 26, 47, 50, 71, 74, 95, 98, 119, 122, 143, 146, 167, 170, 191]
+    "keeper": {
+      "per_team": 1,
+      "cost": "round_1_pick",
+      "renews_annually": true
+    },
+    "your_overall_picks": [
+      11,
+      23,
+      26,
+      47,
+      50,
+      71,
+      74,
+      95,
+      98,
+      119,
+      122,
+      143,
+      146,
+      167,
+      170,
+      191
+    ],
+    "your_earliest_K_round": 16,
+    "your_earliest_DST_round": 15
   },
   "scoring": {
     "yardage_floors": {
-      "passing": { "yards_per_point": 50 },
-      "rushing": { "yards_per_point": 25 },
-      "receiving": { "yards_per_point": 25 }
+      "passing": {
+        "yards_per_point": 50
+      },
+      "rushing": {
+        "yards_per_point": 25
+      },
+      "receiving": {
+        "yards_per_point": 25
+      }
     },
     "yardage_bonuses": {
       "stacking": false,
       "note": "highest applicable tier only, per category, independently",
-      "rushing": [ { "min": 100, "max": 199, "points": 2 }, { "min": 200, "max": null, "points": 3 } ],
-      "receiving": [ { "min": 100, "max": 199, "points": 2 }, { "min": 200, "max": null, "points": 3 } ],
+      "rushing": [
+        {
+          "min": 100,
+          "max": 199,
+          "points": 2
+        },
+        {
+          "min": 200,
+          "max": null,
+          "points": 3
+        }
+      ],
+      "receiving": [
+        {
+          "min": 100,
+          "max": 199,
+          "points": 2
+        },
+        {
+          "min": 200,
+          "max": null,
+          "points": 3
+        }
+      ],
       "passing": []
     },
-    "touchdowns": { "rushing": 6, "receiving": 6, "passing": 3 },
-    "turnovers": { "interception_thrown": -1, "fumble_lost": 0 },
+    "touchdowns": {
+      "rushing": 6,
+      "receiving": 6,
+      "passing": 3
+    },
+    "turnovers": {
+      "interception_thrown": -1,
+      "fumble_lost": 0
+    },
     "receptions": 0,
-    "two_point_conversions": { "pass": 1, "rush": 2, "receive": 2 },
+    "two_point_conversions": {
+      "pass": 1,
+      "rush": 2,
+      "receive": 2
+    },
     "positional_gating": false,
     "kicking": {
       "pat_made": 1,
       "fg_made": [
-        { "min": 0, "max": 39, "points": 3 },
-        { "min": 40, "max": 49, "points": 3 },
-        { "min": 50, "max": 59, "points": 4 },
-        { "min": 60, "max": null, "points": 4 }
+        {
+          "min": 0,
+          "max": 39,
+          "points": 3
+        },
+        {
+          "min": 40,
+          "max": 49,
+          "points": 3
+        },
+        {
+          "min": 50,
+          "max": 59,
+          "points": 4
+        },
+        {
+          "min": 60,
+          "max": null,
+          "points": 4
+        }
       ]
     },
     "dst": {
@@ -76,26 +191,98 @@
       "fumble_recovered": 1,
       "safety": 2,
       "points_allowed": [
-        { "min": 0, "max": 0, "points": 5 },
-        { "min": 1, "max": 6, "points": 4 },
-        { "min": 7, "max": 13, "points": 3 },
-        { "min": 14, "max": 17, "points": 2 },
-        { "min": 18, "max": 21, "points": 1 },
-        { "min": 22, "max": 27, "points": 0 },
-        { "min": 28, "max": 34, "points": -1 },
-        { "min": 35, "max": 45, "points": -2 },
-        { "min": 46, "max": null, "points": -3 }
+        {
+          "min": 0,
+          "max": 0,
+          "points": 5
+        },
+        {
+          "min": 1,
+          "max": 6,
+          "points": 4
+        },
+        {
+          "min": 7,
+          "max": 13,
+          "points": 3
+        },
+        {
+          "min": 14,
+          "max": 17,
+          "points": 2
+        },
+        {
+          "min": 18,
+          "max": 21,
+          "points": 1
+        },
+        {
+          "min": 22,
+          "max": 27,
+          "points": 0
+        },
+        {
+          "min": 28,
+          "max": 34,
+          "points": -1
+        },
+        {
+          "min": 35,
+          "max": 45,
+          "points": -2
+        },
+        {
+          "min": 46,
+          "max": null,
+          "points": -3
+        }
       ],
       "yards_allowed": [
-        { "min": 0, "max": 99, "points": 4 },
-        { "min": 100, "max": 199, "points": 3 },
-        { "min": 200, "max": 299, "points": 2 },
-        { "min": 300, "max": 349, "points": 1 },
-        { "min": 350, "max": 399, "points": 0 },
-        { "min": 400, "max": 449, "points": -1 },
-        { "min": 450, "max": 499, "points": -2 },
-        { "min": 500, "max": 549, "points": -3 },
-        { "min": 550, "max": null, "points": -4 }
+        {
+          "min": 0,
+          "max": 99,
+          "points": 4
+        },
+        {
+          "min": 100,
+          "max": 199,
+          "points": 3
+        },
+        {
+          "min": 200,
+          "max": 299,
+          "points": 2
+        },
+        {
+          "min": 300,
+          "max": 349,
+          "points": 1
+        },
+        {
+          "min": 350,
+          "max": 399,
+          "points": 0
+        },
+        {
+          "min": 400,
+          "max": 449,
+          "points": -1
+        },
+        {
+          "min": 450,
+          "max": 499,
+          "points": -2
+        },
+        {
+          "min": 500,
+          "max": 549,
+          "points": -3
+        },
+        {
+          "min": 550,
+          "max": null,
+          "points": -4
+        }
       ]
     }
   },
@@ -105,5 +292,12 @@
     "trade_deadline": "2026-12-02T12:00:00-05:00",
     "trade_veto_votes": 6
   },
-  "replacement_levels": { "QB": 12, "RB": 24, "WR": 24, "TE": 12, "DST": 12, "K": 12 }
+  "replacement_levels": {
+    "QB": 12,
+    "RB": 24,
+    "WR": 24,
+    "TE": 12,
+    "DST": 12,
+    "K": 12
+  }
 }
