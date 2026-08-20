@@ -2,7 +2,7 @@ DRAFTMARK — complete project
 ============================
 
 This folder is COMPLETE. Replace your old draftmark folder with this one.
-Everything is regenerated and every test passes (209 assertions, 10 suites).
+Everything is regenerated and every test passes (270 assertions, 11 suites).
 
 WHAT YOU OPEN ON DRAFT DAY
     app/draftboard.html          <- double-click it. That's the whole tool.
@@ -35,6 +35,7 @@ CHECK EVERYTHING STILL WORKS
     node test/scoring.test.js       36 assertions, the scoring engine
     node test/opponents.test.js     opponent model vs your real league
     node test/vona.test.js          the recommendation engine
+    node test/autopick.test.js      the auto-drafter and the mock scout
 
 FULL REBUILD FROM SCRATCH (only if something breaks badly)
     python3 build/ingest_nflverse.py
