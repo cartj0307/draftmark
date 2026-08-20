@@ -86,6 +86,12 @@ tr.sel{background:rgba(255,176,32,.12);box-shadow:inset 3px 0 0 var(--act)}
 tr.flagged td.fl{color:var(--act)}
 td.fl{width:18px;color:var(--dim);cursor:pointer}
 #more{padding:6px 8px}
+.rowbtn{font-size:10px;letter-spacing:.06em;padding:2px 7px;border-radius:3px;
+  border:1px solid var(--line);background:transparent;color:var(--mut);cursor:pointer}
+.rowbtn:hover{border-color:var(--mut);color:var(--txt)}
+.rowbtn.queued{border-color:var(--act);color:var(--act)}
+.rowbtn.draft{border-color:var(--act);color:var(--act);font-weight:700;background:rgba(255,176,32,.12)}
+.rowbtn.draft:hover{background:rgba(255,176,32,.25)}
 #gridWrap table{border-collapse:collapse;font-size:11px;width:100%}
 #gridWrap th,#gridWrap td{border:1px solid var(--line);padding:2px 5px;text-align:left;white-space:nowrap}
 #gridWrap th{background:var(--panel2);color:var(--mut);position:sticky;top:0}
@@ -150,6 +156,16 @@ body.amending #cmdInput{border-color:var(--act);box-shadow:0 0 0 1px var(--act)}
 #corrList .crow.sel{background:rgba(255,176,32,.12);box-shadow:inset 3px 0 0 var(--act)}
 #corrList .crow .ov{width:44px;color:var(--dim)}
 #corrList .crow .tm{width:170px;color:var(--mut);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#scoutWrap table{border-collapse:collapse;width:100%;font-size:13px}
+#scoutWrap th{text-align:left;color:var(--mut);font-weight:400;padding:6px 8px;
+  border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+#scoutWrap td{padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top}
+#scoutWrap tr.yr td{background:rgba(255,176,32,.06)}
+#scoutWrap .pk{color:var(--dim);width:82px;white-space:nowrap}
+#scoutWrap .lock{color:var(--txt)}
+#scoutWrap .coin{color:var(--act)}
+#scoutWrap .gone{color:var(--dim)}
+#scoutWrap .took{color:var(--mut);font-size:12px}
 kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2px;
   border-radius:3px;padding:0 5px;font-size:11px;color:var(--mut)}
 .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mut)}
@@ -183,6 +199,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 <script id="src_scoring">__SCORING__</script>
 <script id="src_sim">__SIM__</script>
 <script id="src_recommend">__RECOMMEND__</script>
+<script id="src_autopick">__AUTOPICK__</script>
 
 <div id="app">
   <div id="head">
@@ -193,6 +210,15 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
     <button id="btnGrid" title="F5">Full board</button>
     <button id="btnCorr" title="F4">Corrections</button>
     <button id="btnSandbox" title="F6">Scratch space</button>
+    <button id="btnAutoOne" title="F10">Auto pick</button>
+    <button id="btnAutoMe" title="Shift+F10">&rarr; my pick</button>
+    <button id="btnAutoAll" title="Ctrl+F10">Auto-draft rest</button>
+    <button id="btnScout" title="Shift+F9">Mock scout</button>
+    <select id="autoPreset" title="how sharply the auto-drafter plays">
+      <option value="pro">pro</option>
+      <option value="realistic">realistic</option>
+      <option value="chaos">chaos</option>
+    </select>
     <button id="btnExport" title="F8">Export log</button>
     <button id="btnImport">Import log</button>
     <input type="file" id="fileImport" accept="application/json" style="display:none">
@@ -222,6 +248,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
           <th class="num" style="width:58px" title="value over replacement — E[season] through the survival-sum identity, minus the replacement starter at the position">Val</th>
           <th class="num" style="width:54px" title="total expected touchdowns over the regular season — rushing, receiving, AND passing (QBs). The league's currency.">xTD</th>
           <th class="num" style="width:50px" title="average draft position (market view — pending ESPN ingest until run)">ADP</th>
+          <th style="width:62px"></th>
         </tr></thead>
         <tbody id="poolBody"></tbody>
       </table>
@@ -256,6 +283,13 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
 </div>
 
 <!-- full league board (F5) -->
+<div class="overlay" id="scoutOverlay">
+  <div class="panelBox" style="width:min(1100px,96vw)">
+    <h2>Mock scout — what reaches you, across repeated auto-drafts · <kbd>Esc</kbd> close</h2>
+    <div id="scoutWrap" style="overflow:auto"></div>
+  </div>
+</div>
+
 <div class="overlay" id="gridOverlay">
   <div class="panelBox" style="width:min(1400px,96vw)">
     <h2>Full draft board — every team, every round · <kbd>Esc</kbd> close</h2>
@@ -283,6 +317,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2p
       <span><kbd>Tab</kbd> cycle position filter</span>
       <span><kbd>F2</kbd> undo last</span><span><kbd>F3</kbd> flag target</span>
       <span><kbd>F4</kbd> corrections</span><span><kbd>F5</kbd> full league board</span><span><kbd>F6</kbd> scratch space</span><span><kbd>F7</kbd> simulate season</span><span><kbd>F9</kbd> recommend pick</span>
+      <span><kbd>F10</kbd> auto-pick this team</span><span><kbd>Shift</kbd>+<kbd>F10</kbd> run to your pick</span><span><kbd>Ctrl</kbd>+<kbd>F10</kbd> auto-draft the rest</span>
       <span><kbd>F8</kbd> export log</span><span><kbd>Esc</kbd> clear / exit</span>
     </div>
     <p class="mut" style="margin-top:10px">Legality is warned, never blocked — this board records
@@ -332,10 +367,11 @@ const LEAGUE = JSON.parse(document.getElementById("leagueData").textContent);
 const BUNDLE = JSON.parse(document.getElementById("bundleData").textContent);
 const PROFILES = JSON.parse(document.getElementById("profileData").textContent);
 const CORE = window; // draft_core exposes globals when no module system
-const POS_ORDER = ["ALL","QB","RB","WR","TE","DST","K"];
+const POS_ORDER = ["ALL","QB","RB","WR","TE","DST","K","QUEUE"];
 const REG_WEEKS = 14;
 const LS_KEY = "draftmark_" + LEAGUE.meta.season;
 const LS_FLAGS = LS_KEY + "_flags";
+const LS_AUTOPRESET = LS_KEY + "_autopreset";
 
 /* unified draftable universe: skill players + kickers + D/ST */
 const PLAYERS = [];
@@ -364,6 +400,11 @@ for (const d of BUNDLE.dst) {
     searchName: normName(d.team + " dst defense special teams"), notes: [] });
 }
 const BY_ID = Object.fromEntries(PLAYERS.map((p) => [p.id, p]));
+
+/* Where waivers start, per position. Computed once off the whole player
+ * universe, not the remaining pool, because it is a property of the league's
+ * roster rules rather than of how far the draft has got. */
+const WAIVER = waiverBaselines(PLAYERS, LEAGUE);
 
 /* Phase 3: the intelligence layer — computed once (model-only inputs) */
 useGammaSurvival(gammaSurvival);
@@ -429,6 +470,15 @@ function append(ev) {
   if (typeof cancelRecommend === "function") cancelRecommend();
   if (eventsSandbox) { eventsSandbox = [...eventsSandbox, ev]; }
   else { eventsLive = [...eventsLive, ev]; persist(); }
+  render();
+}
+/* many picks, one render: an auto-draft of 180 cells re-rendering per pick
+ * spends more time on the DOM than on the draft */
+function appendMany(evs) {
+  if (!evs.length) return;
+  if (typeof cancelRecommend === "function") cancelRecommend();
+  if (eventsSandbox) { eventsSandbox = [...eventsSandbox, ...evs]; }
+  else { eventsLive = [...eventsLive, ...evs]; persist(); }
   render();
 }
 
@@ -523,9 +573,9 @@ function receivingSlot(st) {
  * starting lineup"): when your remaining picks are exactly what's needed to
  * fill your empty starter seats, only those positions are shown. Other teams
  * stay unrestricted — punting K/D to waivers is a real strategy others use. */
-function requiredPositions(st) {
-  const slot = receivingSlot(st);
-  if (slot !== LEAGUE.your_slot) return null;
+/* The lineup rule, for any slot: once your remaining picks only just cover
+ * your empty starting seats, those seats are all you may spend them on. */
+function requiredForSlot(st, slot) {
   const counts = posCounts(st, slot);
   const need = new Set();
   let emptySeats = 0;
@@ -535,6 +585,12 @@ function requiredPositions(st) {
   }
   const remaining = st.board.filter((c) => c.slot === slot && !c.playerId).length;
   return (emptySeats > 0 && remaining <= emptySeats) ? need : null;
+}
+
+function requiredPositions(st) {
+  const slot = receivingSlot(st);
+  if (slot !== LEAGUE.your_slot) return null;
+  return requiredForSlot(st, slot);
 }
 
 function blockedPositions(st) {
@@ -583,16 +639,21 @@ function render() {
   let legalPool = blocked.size ? pool.filter((p) => !blocked.has(p.position)) : pool;
   if (required) legalPool = legalPool.filter((p) => required.has(p.position));
   const q = $("cmdInput").value;
-  lastResults = searchPool(legalPool, q, posFilter);
+  /* the QUEUE tab is a view over the flags, filtered the same way the pool is
+   * so a queued player who has already gone never shows */
+  const queueView = posFilter === "QUEUE";
+  lastResults = queueView
+    ? searchPool(legalPool.filter((p) => flags.has(p.id)), q, "ALL")
+    : searchPool(legalPool, q, posFilter);
   if (selIdx >= lastResults.length) selIdx = Math.max(0, lastResults.length - 1);
   const LIMIT = 120;
-  const drawBands = posFilter !== "ALL" && !q;   /* tiers drawn as horizontal breaks (V.3) */
+  const drawBands = posFilter !== "ALL" && !queueView && !q;   /* tiers drawn as horizontal breaks (V.3) */
   const parts = [];
   lastResults.slice(0, LIMIT).forEach((p, i) => {
     if (drawBands && i > 0) {
       const prev = lastResults[i - 1];
       if (prev.tier != null && p.tier != null && p.tier !== prev.tier) {
-        parts.push(`<tr class="tierbreak"><td colspan="9">tier ${p.tier}</td></tr>`);
+        parts.push(`<tr class="tierbreak"><td colspan="10">tier ${p.tier}</td></tr>`);
       }
     }
     parts.push(`
@@ -606,8 +667,13 @@ function render() {
       <td class="num">${p.val == null ? '<span class="dim">—</span>' : p.val.toFixed(0)}</td>
       <td class="num">${p.xtd == null ? '<span class="dim">—</span>' : p.xtd.toFixed(1)}</td>
       <td class="num dim">${p.adp == null ? "—" : Math.round(p.adp)}</td>
+      <td>${rowAction(p, st)}</td>
     </tr>`);
   });
+  if (queueView && !lastResults.length) {
+    parts.push('<tr><td colspan="10" class="dim" style="padding:10px">' +
+      'Queue is empty. Press F3 or click QUEUE on any player to add them.</td></tr>');
+  }
   $("poolBody").innerHTML = parts.join("");
   renderCliffs(st);
   const hiddenNote = required
@@ -666,6 +732,16 @@ function render() {
     : lastCommitMsg ? `<span class="mut">${lastCommitMsg}</span> · ${posFilter}`
     : `filter: ${posFilter}`;
   renderPosFilter();
+}
+
+/* When it is your pick the button drafts; otherwise it queues. Same button,
+ * same place, so there is nothing to learn — and Enter still works. */
+function rowAction(p, st) {
+  const onClock = !st.complete && st.untilYou === 0;
+  if (onClock) return `<button class="rowbtn draft" data-act="draft" data-id="${p.id}">DRAFT</button>`;
+  const queued = flags.has(p.id);
+  return `<button class="rowbtn ${queued ? "queued" : ""}" data-act="queue" data-id="${p.id}">` +
+         `${queued ? "QUEUED" : "QUEUE"}</button>`;
 }
 
 function renderPosFilter() {
@@ -838,7 +914,7 @@ function toggleFlag() {
 }
 function toggleSandbox() {
   if (eventsSandbox) { eventsSandbox = null; }        // discard, no path to commit
-  else { eventsSandbox = [...eventsLive]; }           // fork
+  else { eventsSandbox = [...eventsLive]; reseedAuto(); }   // fork, new mock seed
   amendTarget = null;
   render();
 }
@@ -923,6 +999,7 @@ function closeOverlays() {
   $("corrOverlay").classList.remove("show");
   $("helpOverlay").classList.remove("show");
   $("drillOverlay").classList.remove("show");
+  $("scoutOverlay").classList.remove("show");
 }
 $("btnCorr").onclick = openCorr;
 $("btnGrid").onclick = openGrid;
@@ -933,6 +1010,13 @@ document.addEventListener("keydown", (e) => {
   const setupOpen = $("setup").classList.contains("show");
   if (setupOpen) return;
 
+  if ($("scoutOverlay").classList.contains("show")) {
+    if (e.key === "Escape" || (e.key === "F9" && e.shiftKey)) {
+      $("scoutOverlay").classList.remove("show"); e.preventDefault();
+    }
+    e.stopPropagation();
+    return;
+  }
   if ($("gridOverlay").classList.contains("show")) {
     if (e.key === "Escape" || e.key === "F5") { $("gridOverlay").classList.remove("show"); e.preventDefault(); }
     e.stopPropagation();
@@ -974,7 +1058,14 @@ document.addEventListener("keydown", (e) => {
     case "F5": openGrid(); e.preventDefault(); break;
     case "F6": toggleSandbox(); e.preventDefault(); break;
     case "F7": runTitleSim(); e.preventDefault(); break;
-    case "F9": runRecommend(); e.preventDefault(); break;
+    case "F9":
+      if (e.shiftKey) runScout(); else runRecommend();
+      e.preventDefault(); break;
+    case "F10":
+      if (e.ctrlKey) autoDraftRest();
+      else if (e.shiftKey) autoRunToYou();
+      else autoPickOne();
+      e.preventDefault(); break;
     case "F8": exportLog(); e.preventDefault(); break;
     case "Escape":
       if (amendTarget) { amendTarget = null; render(); }
@@ -988,6 +1079,15 @@ $("cmdInput").addEventListener("input", () => { selIdx = 0; render(); });
 document.addEventListener("click", (e) => {
   const pf = e.target.closest(".pf");
   if (pf) { posFilter = pf.dataset.p; selIdx = 0; render(); focusCmd(); return; }
+  const btn = e.target.closest(".rowbtn");
+  if (btn) {
+    const row = btn.closest("tr");
+    if (row) selIdx = +row.dataset.i;
+    if (btn.dataset.act === "draft") commitSelection();
+    else toggleFlag();
+    focusCmd();
+    return;
+  }
   const fl = e.target.closest("td.fl");
   if (fl) { selIdx = +fl.parentElement.dataset.i; toggleFlag(); focusCmd(); return; }
   const tr = e.target.closest("#poolBody tr");
@@ -1194,7 +1294,17 @@ function runRecommend(opts = {}) {
   const gen = recGen;
   recBusy = true;
   recForOverall = st.current.overall;
-  const { openCells, startRosters, pool } = buildRecCtx(st);
+  const ctx0 = buildRecCtx(st);
+  const { openCells, startRosters } = ctx0;
+  /* F9 always advises YOUR seat, so it must respect your lineup rule and your
+   * position limits even when someone else is on the clock. */
+  const yourNeed = requiredForSlot(st, LEAGUE.your_slot);
+  const yourCounts = posCounts(st, LEAGUE.your_slot);
+  const pool = ctx0.pool.filter((p) => {
+    if ((yourCounts[p.position] || 0) >= (LEAGUE.roster.position_max[p.position] ?? 99)) return false;
+    if (yourNeed && !yourNeed.has(p.position)) return false;
+    return true;
+  });
   if (!openCells.some((c) => c.slot === LEAGUE.your_slot)) {
     renderRec([], null, false, "you have no picks left — the surface rests"); recBusy = false; return;
   }
@@ -1214,7 +1324,14 @@ function runRecommend(opts = {}) {
     if (gen !== recGen) return;
     const fc = survivalForecast(openCells, startRosters, pool, LEAGUE.your_slot,
                                 LEAGUE, posOfAll, timing, 150);
-    const ranked = rankByVona(pool, startRosters[LEAGUE.your_slot], LEAGUE, posOfAll, fc);
+    const ranked = rankByVona(pool, startRosters[LEAGUE.your_slot], LEAGUE, posOfAll, fc, {
+      waiver: WAIVER,
+      floors: seatFloors(pool, startRosters, LEAGUE, posOfAll, WAIVER),
+      valOf: (id) => (BY_ID[id] ? BY_ID[id].val : 0),
+      round: st.current ? st.current.round : 0,
+      earliestK: (LEAGUE.draft || {}).your_earliest_K_round || 0,
+      earliestDST: (LEAGUE.draft || {}).your_earliest_DST_round || 0,
+    });
     if (!ranked.length) { renderRec([], null, false, "no legal players"); recBusy = false; return; }
     renderVona(ranked, fc, st);
     recBusy = false;
@@ -1295,8 +1412,296 @@ function renderVona(ranked, fc, st) {
 
 window.runRecommend = runRecommend;
 
+/* =================== Phase 6: the auto-drafter =========================== */
+/* Every seat runs the same decision process the F9 surface runs for you:
+ * forecast that team's next turn, price the board against what they could
+ * still get then, and take the best legal pick. Opponents are not a scenery
+ * generator — a mock is only worth running if the rosters it produces are as
+ * good as the ones your league will actually build. */
+configureAutopick({ survivalForecast, rankByVona, makeRng,
+                    seatFloors, marginalGain, valsByPos });
+
+let autoPreset = localStorage.getItem(LS_AUTOPRESET) || "pro";
+let autoSeed = (Math.random() * 1e9) | 0;
+let autoBusy = false;
+
+function reseedAuto() { autoSeed = (Math.random() * 1e9) | 0; }
+
+function autoCtx(st) {
+  const { openCells, startRosters, pool } = buildRecCtx(st);
+  return {
+    openCells, rosters: startRosters, pool, cfg: LEAGUE,
+    timing: buildTiming(st),
+    posOf: (id) => POS_OF_ALL[id] || "?",
+    valOf: (id) => (BY_ID[id] ? BY_ID[id].val : 0),
+    byeOf: (id) => (BY_ID[id] ? BY_ID[id].bye : null),
+    waiver: WAIVER,
+  };
+}
+
+function autoStatus(html) { $("recVerdict").textContent = ""; $("recNote").innerHTML = html; }
+
+/** One pick for whoever is on the clock. Returns the result, or null. */
+function autoPickOne() {
+  const st = state();
+  if (!st.setup || st.complete || autoBusy) return null;
+  const res = autoPick(autoCtx(st), { preset: autoPreset,
+                                      seed: autoSeed + st.current.overall * 7919 });
+  if (!res) return null;
+  append(makeEvent("PICK", { playerId: res.player.id }));
+  lastCommitMsg = `auto ${res.overall}: ${teamName(st, res.slot)} &rarr; ${res.player.name} ` +
+                  `<span class="mut">(${res.why})</span>`;
+  render();
+  return res;
+}
+
+/* Chunked so the board stays responsive: a full 16-round auto-draft is about
+ * three seconds of forecasting, which is three seconds of a frozen tab if it
+ * runs in one go. */
+function autoLoop(stopWhen, label, done) {
+  if (autoBusy) return;
+  const st0 = state();
+  if (!st0.setup || st0.complete) return;
+  autoBusy = true;
+  const base = [...activeEvents()];
+  const evs = [], made = [];
+  const CHUNK = 8;
+
+  function step() {
+    if (!autoBusy) return;
+    for (let i = 0; i < CHUNK; i++) {
+      const st = fold([...base, ...evs], LEAGUE);
+      if (st.complete || (stopWhen && stopWhen(st))) return finish(evs, made, label, done);
+      const res = autoPick(autoCtx(st), { preset: autoPreset,
+                                          seed: autoSeed + st.current.overall * 7919 });
+      if (!res) return finish(evs, made, label, done);
+      evs.push(makeEvent("PICK", { playerId: res.player.id }));
+      made.push({ ...res, team: teamName(st, res.slot) });
+    }
+    autoStatus(`<span style="color:var(--act)">${label}… ${made.length} picks</span>`);
+    setTimeout(step, 0);
+  }
+  setTimeout(step, 0);
+}
+
+function finish(evs, made, label, done) {
+  autoBusy = false;
+  appendMany(evs);
+  if (done) done(made);
+  else autoStatus(autoSummary(made, label));
+  return made;
+}
+
+function autoSummary(made, label) {
+  if (!made.length) return `<span class="mut">${label}: nothing to pick</span>`;
+  const rows = [`<div class="verdictline" style="color:var(--act)">${label.toUpperCase()} — ${made.length} PICKS</div>`];
+  const mine = made.filter((m) => m.slot === LEAGUE.your_slot);
+  if (mine.length) {
+    rows.push(`<div class="because">your picks: ` +
+      mine.map((m) => `${m.player.name} (${m.player.position}, R${m.round})`).join(", ") + `</div>`);
+  }
+  const notable = made.filter((m) => m.slot !== LEAGUE.your_slot)
+    .sort((a, b) => (b.player.val ?? -1e6) - (a.player.val ?? -1e6)).slice(0, 8);
+  for (const m of notable) {
+    rows.push(`<div class="candrow">
+      <span class="cn"><span class="chip ${m.player.position}" style="margin-right:5px">${m.player.position}</span>${m.player.name}</span>
+      <span class="bar"></span>
+      <span class="cp num">${m.overall} · ${m.team}</span></div>`);
+  }
+  rows.push(`<div class="tax">preset ${autoPreset} · F2 undoes one pick at a time</div>`);
+  return rows.join("");
+}
+
+/** Auto-pick every opponent until you are back on the clock. */
+function autoRunToYou() {
+  const st = state();
+  if (st.onClockSlot === LEAGUE.your_slot) {
+    autoStatus(`<span class="mut">you are on the clock — F9 for the recommendation</span>`);
+    return;
+  }
+  autoLoop((s) => s.onClockSlot === LEAGUE.your_slot, "ran to your pick");
+}
+
+/** Auto-draft everything that is left, your own seat included. */
+function autoDraftRest() {
+  if (!eventsSandbox && !confirm(
+      "Auto-draft the rest of the REAL board?\n\n" +
+      "This is meant for scratch space (F6), where it discards cleanly.")) return;
+  autoLoop(null, "auto-drafted the rest");
+}
+
+$("btnAutoOne").onclick = () => autoPickOne();
+$("btnAutoMe").onclick = () => autoRunToYou();
+$("btnAutoAll").onclick = () => autoDraftRest();
+$("autoPreset").value = autoPreset;
+$("autoPreset").onchange = (e) => {
+  autoPreset = e.target.value;
+  localStorage.setItem(LS_AUTOPRESET, autoPreset);
+  reseedAuto();
+  focusCmd();
+};
+
+
+/* =================== Phase 7: the mock scout ============================= */
+/* One mock tells you what happened once. The question you actually have is
+ * which players reach you often enough to plan around, so run the auto-draft
+ * many times from the live board and report the distribution.
+ *
+ * Forecast depth is cut hard here. Individual mocks diverge chaotically when
+ * you change it — one different pick cascades — but the aggregate does not:
+ * measured over ten mocks, mean starter strength and the best value reaching
+ * each of your picks move by less than the spread between mocks, while a mock
+ * runs five times faster. Depth buys nothing you are reading off this table. */
+const SCOUT_RUNS = 10;
+const SCOUT_DEFAULT_MOCKS = 20;
+let scoutBusy = false;
+
+function scoutBase(st) {
+  const { openCells, startRosters, pool } = buildRecCtx(st);
+  return { openCells, rosters: startRosters, pool, timing: buildTiming(st) };
+}
+
+/** One full auto-draft from here to the last cell, entirely in memory. */
+function scoutOneMock(base, seed) {
+  const rosters = {};
+  for (const [k, v] of Object.entries(base.rosters)) rosters[k] = [...v];
+  const taken = new Set();
+  const avail = {}, took = {};
+  const posOf = (id) => POS_OF_ALL[id] || "?";
+  let open = base.openCells;
+
+  while (open.length) {
+    const cell = open[0];
+    const pool = base.pool.filter((p) => !taken.has(p.id));
+    if (cell.slot === LEAGUE.your_slot) {
+      const per = {}, keep = [];
+      for (const p of pool) {                     // pool is value-sorted
+        per[p.position] = (per[p.position] || 0) + 1;
+        if (per[p.position] <= 5) keep.push(p);
+      }
+      avail[cell.overall] = keep;
+    }
+    const res = autoPick({ openCells: open, rosters, pool, cfg: LEAGUE,
+                           timing: base.timing, posOf,
+                           valOf: (id) => (BY_ID[id] ? BY_ID[id].val : 0),
+                           byeOf: (id) => (BY_ID[id] ? BY_ID[id].bye : null),
+                           waiver: WAIVER },
+                         { preset: autoPreset, runs: SCOUT_RUNS,
+                           seed: seed + cell.overall * 7919 });
+    if (!res) break;
+    taken.add(res.player.id);
+    rosters[res.slot].push(res.player.id);
+    if (cell.slot === LEAGUE.your_slot) took[cell.overall] = res.player;
+    open = open.slice(1);
+  }
+  return { avail, took };
+}
+
+function runScout(nMocks) {
+  if (scoutBusy) return;
+  const st = state();
+  if (!st.setup || st.complete) return;
+  const N = nMocks || SCOUT_DEFAULT_MOCKS;
+  const base = scoutBase(st);
+  if (!base.openCells.some((c) => c.slot === LEAGUE.your_slot)) {
+    autoStatus(`<span class="mut">you have no picks left to scout</span>`); return;
+  }
+  scoutBusy = true;
+  $("scoutOverlay").classList.add("show");
+  const agg = { avail: {}, took: {} };
+  let done = 0;
+
+  function paint(msg) {
+    $("scoutWrap").innerHTML = msg + renderScout(agg, done, st, done < N);
+  }
+  paint(`<p class="mut" style="margin-bottom:8px">running mock ${done + 1} of ${N}…</p>`);
+
+  function step() {
+    const t0 = Date.now();
+    while (done < N && Date.now() - t0 < 120) {     // stay under a frame budget
+      const { avail, took } = scoutOneMock(base, ((Math.random() * 1e9) | 0));
+      for (const [ov, list] of Object.entries(avail)) {
+        const b = agg.avail[ov] = agg.avail[ov] || {};
+        for (const p of list) {
+          const k = p.position + "|" + p.name;
+          b[k] = (b[k] || 0) + 1;
+        }
+      }
+      for (const [ov, p] of Object.entries(took)) {
+        const b = agg.took[ov] = agg.took[ov] || {};
+        const k = p.position + "|" + p.name;
+        b[k] = (b[k] || 0) + 1;
+      }
+      done++;
+    }
+    if (done < N) {
+      paint(`<p class="mut" style="margin-bottom:8px">running mock ${done + 1} of ${N}…</p>`);
+      setTimeout(step, 0);
+    } else {
+      scoutBusy = false;
+      paint("");
+    }
+  }
+  setTimeout(step, 0);
+}
+
+const SCOUT_POS = ["RB", "WR", "TE", "QB", "K", "DST"];
+
+function renderScout(agg, mocks, st, partial) {
+  if (!mocks) return "";
+  const roundOf = {};
+  for (const c of st.board) roundOf[c.overall] = c.round;
+  const ovs = Object.keys(agg.avail).map(Number).sort((a, b) => a - b);
+  const rows = [`<table><thead><tr><th>your pick</th><th>who is still there</th></tr></thead><tbody>`];
+
+  for (const ov of ovs) {
+    const bucket = agg.avail[ov], round = roundOf[ov];
+    const byPos = {};
+    for (const [k, n] of Object.entries(bucket)) {
+      const i = k.indexOf("|");
+      const pos = k.slice(0, i), name = k.slice(i + 1);
+      (byPos[pos] = byPos[pos] || []).push([name, n / mocks]);
+    }
+    const lines = [];
+    for (const pos of SCOUT_POS) {
+      /* kickers and defenses are noise until the rounds you would spend a
+       * pick on one */
+      if ((pos === "K" || pos === "DST") && round < 12) continue;
+      const list = (byPos[pos] || []).sort((a, b) => b[1] - a[1]).slice(0, 4);
+      if (!list.length) continue;
+      lines.push(`<div><span class="chip ${pos}" style="margin-right:6px">${pos}</span>` +
+        list.map(([n, f]) => {
+          const cls = f >= 0.85 ? "lock" : f >= 0.35 ? "coin" : "gone";
+          return `<span class="${cls}">${n} ${(f * 100).toFixed(0)}%</span>`;
+        }).join(` <span class="dim">·</span> `) + `</div>`);
+    }
+    const took = Object.entries(agg.took[ov] || {}).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    if (took.length) {
+      lines.push(`<div class="took">it took: ` + took.map(([k, n]) =>
+        `${k.slice(k.indexOf("|") + 1)} ${n}/${mocks}`).join(" · ") + `</div>`);
+    }
+    rows.push(`<tr class="yr"><td class="pk">${ov}<br><span class="dim">round ${round}</span></td>` +
+              `<td>${lines.join("")}</td></tr>`);
+  }
+  rows.push(`</tbody></table>`);
+  rows.push(`<p class="mut" style="margin-top:10px">${mocks} auto-drafts${partial ? " so far" : ""} · preset ${autoPreset} · ` +
+    `<span class="lock">near-certain</span>, <span class="coin">live chance</span>, ` +
+    `<span class="gone">long shot</span>. Nothing here touched your board.</p>`);
+  return rows.join("");
+}
+
+$("btnScout").onclick = () => runScout();
+window.runScout = runScout;
+
+window.autoPickOne = autoPickOne;
+window.autoRunToYou = autoRunToYou;
+window.autoDraftRest = autoDraftRest;
+
+
 /* dev/test hook — used by the headless acceptance suite */
-window._dm = { append: (e) => append(e), state, makeEvent };
+window._dm = { append: (e) => append(e), state, makeEvent,
+               pos: (id) => POS_OF_ALL[id] || "?",
+               val: (id) => (BY_ID[id] ? BY_ID[id].val : null) };
 
 /* ============================== boot ==================================== */
 (function boot() {
