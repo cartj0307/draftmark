@@ -25,6 +25,7 @@ def main():
     scoring = (ROOT / "src" / "scoring.js").read_text()
     sim = (ROOT / "src" / "sim.js").read_text()
     recommend = (ROOT / "src" / "recommend.js").read_text()
+    autopick = (ROOT / "src" / "autopick.js").read_text()
     league = json.loads((ROOT / "config" / "league.json").read_text())
     bundle = json.loads((ROOT / "data" / "bundle.json").read_text())
     prof_path = ROOT / "data" / "league" / "manager_profiles.json"
@@ -37,11 +38,12 @@ def main():
            .replace("__SCORING__", scoring)
            .replace("__SIM__", sim)
            .replace("__RECOMMEND__", recommend)
+           .replace("__AUTOPICK__", autopick)
            .replace("__LEAGUE_JSON__", safe_json(league))
            .replace("__BUNDLE_JSON__", safe_json(bundle))
            .replace("__PROFILES_JSON__", safe_json(profiles)))
 
-    for ph in ("__DRAFT_CORE__", "__DISTRIBUTIONS__", "__INTEL__", "__SCORING__", "__SIM__", "__RECOMMEND__", "__LEAGUE_JSON__", "__BUNDLE_JSON__", "__PROFILES_JSON__"):
+    for ph in ("__DRAFT_CORE__", "__DISTRIBUTIONS__", "__INTEL__", "__SCORING__", "__SIM__", "__RECOMMEND__", "__AUTOPICK__", "__LEAGUE_JSON__", "__BUNDLE_JSON__", "__PROFILES_JSON__"):
         assert ph not in out, f"placeholder {ph} not replaced"
 
     dest = ROOT / "app" / "draftboard.html"
